@@ -1,0 +1,9 @@
+suktha\JakartaRestConfiguration.class
+suktha\impl\EmployeeServlet.class
+suktha\dao\EmployeeDao.class
+suktha\model\Employee.class
+suktha\export\ExcelExportServlet.class
+suktha\impl\CheckEmailServlet.class
+suktha\util\HibernateUtil.class
+suktha\impl\CheckPhoneNumberServlet.class
+suktha\resources\JakartaEE8Resource.class
