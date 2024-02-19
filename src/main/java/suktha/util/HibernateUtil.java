@@ -1,14 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package suktha.util;
-
-/**
- *
- * @author Shashank
- */
-
 
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -16,9 +6,9 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 import suktha.model.Employee;
-import org.hibernate.HibernateException;
 
 import java.util.Properties;
+import org.hibernate.HibernateException;
 
 public class HibernateUtil {
 
@@ -36,7 +26,7 @@ public class HibernateUtil {
                 settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL5Dialect");
                 settings.put(Environment.SHOW_SQL, "true");
                 settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-                settings.put(Environment.HBM2DDL_AUTO, "create");
+                settings.put(Environment.HBM2DDL_AUTO, "update");
 
                 config.setProperties(settings);
                 config.addAnnotatedClass(Employee.class);
@@ -45,6 +35,13 @@ public class HibernateUtil {
                         .applySettings(config.getProperties()).build();
 
                 sessionFactory = config.buildSessionFactory(serviceRegistry);
+
+                // Add a shutdown hook to close the SessionFactory
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    if (sessionFactory != null && !sessionFactory.isClosed()) {
+                        sessionFactory.close();
+                    }
+                }));
             }
         } catch (HibernateException e) {
             e.printStackTrace();
@@ -52,4 +49,3 @@ public class HibernateUtil {
         return sessionFactory;
     }
 }
-
