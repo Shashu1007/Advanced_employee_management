@@ -1,11 +1,11 @@
 
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ page import="java.sql.*" %>
-<%@ page import="javax.sql.DataSource" %>
-<%@ page import="javax.naming.Context" %>
-<%@ page import="javax.naming.InitialContext" %>
-<%@ page import="javax.naming.NamingException" %>
+
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<%@ page import="suktha.dao.EmployeeDao" %>
+
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -18,23 +18,16 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" type="text/css" href="/css/styles.css">
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-    <script>
-        function resetForm() {
-        document.getElementById("employeeForm").reset();
-    }
 
-    function saveOrUpdateEmployee() {
-        document.getElementById("employeeForm").submit();
-    }</script>
+    
 <style>
      .filter {
         margin-left: 70%;
-        margin-top: 2%
+        
     }
 
     #sorting,
@@ -43,44 +36,58 @@
         margin-top: 2%
     }
 .container-xl {
-    max-width: 1600px;
+    min-width: 100%;
     margin-right: auto; 
     margin-left: auto;
    
 }
+
 body {
-	color: #566787;
+	color: #2196F3;
 	background: #f5f5f5;
 	font-family: 'Varela Round', sans-serif;
-	font-size: 13px;
+	font-size: 15px;
 }
 .table-responsive {
-    margin:5px;
+    min-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    
+    
+    
     
 }
 .table-wrapper {
 	background: #fff;
-	padding: 20px 25px;
+	padding: 10px ;
 	border-radius: 3px;
-	min-width: 1000px;
+    min-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+	
 	box-shadow: 0 1px 1px rgba(0,0,0,.05);
-        width: inherit;
+
 }
 .table-title {        
-	padding-bottom: 15px;
-	background: #435d7d;
+
+	background: #2196F3;
 	color: #fff;
-	padding: 16px 30px;
-	min-width: 100%;
-	margin: -20px -25px 10px;
+	padding: 10px 10px;
+    min-width: 100%;
+    
+	
 	border-radius: 3px 3px 0 0;
 }
 .table-title h2 {
-	margin: 5px 0 0;
+	margin: 10px;
 	font-size: 24px;
+    min-width: 100%;
+    
 }
 .table-title .btn-group {
 	float: right;
+        margin: 15px;
+
 }
 .table-title .btn {
 	color: #fff;
@@ -88,27 +95,31 @@ body {
 	font-size: 13px;
 	border: none;
 	min-width: 50px;
-	border-radius: 2px;
-	border: none;
+	border-radius: 15%;
+
 	outline: none !important;
-	margin-left: 10px;
+    margin-right: 10px;
+	
 }
 .table-title .btn i {
 	float: left;
-	font-size: 21px;
-	margin-right: 5px;
+	font-size: 15px;
+	
 }
 .table-title .btn span {
 	float: left;
-	margin-top: 2px;
+	
 }
 table.table tr th, table.table tr td {
 	border-color: #e9e9e9;
-	padding: 12px 15px;
+	padding: 5px 5px;
 	vertical-align: middle;
+    min-width: 100%;
+    
 }
 table.table tr th:first-child {
-	width: 60px;
+
+	width: 30px;
 }
 table.table tr th:last-child {
 	width: 100px;
@@ -116,20 +127,24 @@ table.table tr th:last-child {
 table.table-striped tbody tr:nth-of-type(odd) {
 	background-color: #fcfcfc;
         width: inherit;
-}
+    min-width: 100%;
+    margin-right: auto;
+    margin-left: auto;}
 table.table-striped.table-hover tbody tr:hover {
     width: inherit;
 	background: #f5f5f5;
-}
+    min-width: 100%;
+    margin-right: auto;
+    margin-left: auto;}
 table.table th i {
-	font-size: 13px;
-	margin: 0 5px;
+	font-size: 20px;
+	margin: auto; 
 	cursor: pointer;
 }	
 table.table td:last-child i {
 	opacity: 0.9;
-	font-size: 22px;
-	margin: 0 5px;
+	font-size: 20px;
+	margin: 0 10px;
 }
 table.table td a {
 	font-weight: bold;
@@ -148,25 +163,35 @@ table.table td a.delete {
 	color: #F44336;
 }
 table.table td i {
-	font-size: 19px;
+	font-size: 20px;
 }
 table.table .avatar {
 	border-radius: 50%;
 	vertical-align: middle;
-	margin-right: 10px;
+	margin-right: 05px;
+    min-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
 }
+    
+    
+.form-exp{
+    
+    margin:15px;
+}
+
 .pagination {
 	float: right;
 	margin: 0 0 5px;
         text-decoration: #000;
 }.pagination li a {
-    border: none;
+    border: #000;
     font-size: 13px;
     min-width: 20px;
     min-height: 20px;
     margin: 0 2px;
     line-height: 20px;
-    border-radius: 2px !important;
+    border-radius: 90px !important;
     text-align: center;
     padding: 0 6px;
     color: darkcyan;
@@ -176,13 +201,13 @@ table.table .avatar {
 	color: #666;
 }	
 .pagination li.active a, .pagination li a:hover {
-    background-color: #000;
-    color: #fff;
+    background-color: #2196F3;
+    color:  #fff;
 }
 
 .pagination li.active a:hover {        
 	background: #0397d6;
-        color: #fff
+        color:  #fff;
         
 }
 .pagination li.disabled i {
@@ -251,15 +276,11 @@ table.table .avatar {
 	background: #ddd;
 }
 
-.modal .modal-dialog {
-	max-width: 700px;
-}
-.modal , .modal .modal-body, .modal .modal-footer {
-	padding: 05px 05px;     
-}
+
+
 .modal-header{
-        background-color: #435d7d;
-        color:#dddddd;     
+        background-color:  #2196F3;
+        color: #fcfcfc;     
 }
 .close{
     color: #fff;
@@ -268,10 +289,12 @@ table.table .avatar {
 .modal .modal-content {
 	border-radius: 3px;
 	font-size: 14px;
+        color: #000;
 }
 .modal .modal-footer {
-	background: #ecf0f1;
+	background:  #2196F3;
 	border-radius: 0 0 3px 3px;
+        
 }
 .modal .modal-title {
 	display: inline-block;
@@ -279,22 +302,19 @@ table.table .avatar {
 }
 .modal .form-control {
 	border-radius: 2px;
-	box-shadow: none;
+	box-shadow:none ;
 	border-color: #dddddd;
 }
-.modal textarea.form-control {
-	resize: vertical;
-}
-.modal .btn {
-	border-radius: 2px;
-	min-width: 100px;
-}	
+
+	
+	
+        
 .modal form label {
 	font-weight: normal;
         .table-scrollable {
     display: block;
-    max-height: 300px;
-    overflow-y: auto;
+    
+    
     width: 100%;
   }
   
@@ -320,6 +340,13 @@ table.table .avatar {
   background: #04AA6D;
   cursor: pointer;
 }
+.btn-primary{
+    margin: 2px;
+}
+
+.filter-tabler{
+    border: none;
+}
 
 .slider::-moz-range-thumb {
   width: 25px;
@@ -328,176 +355,557 @@ table.table .avatar {
   background: #04AA6D;
   cursor: pointer;
 }
+.col-sm-6{
+
+}
+.selects{
+    margin-right: 60px;
+}
+.filters select {
+    display: none;
+    
+}
+
+.avatar {
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 10px;
+   
+}
+.avatar:hover{
+ transform: scale(2.5);
+ border-radius: 50%; 
+ 
+}
+#preview {
+         width: 100px;
+         height: 100px;
+         border-radius: 50%;
+}
+
 </style>
 <script>
-$(document).ready(function(){
-	
-	$('[data-toggle="tooltip"]').tooltip();
-	
-	
-	var checkbox = $('table tbody input[type="checkbox"]');
-	$("#selectAll").click(function(){
-		if(this.checked){
-			checkbox.each(function(){
-				this.checked = true;                        
-			});
-		} else{
-			checkbox.each(function(){
-				this.checked = false;                        
-			});
-		} 
-	});
-	checkbox.click(function(){
-		if(!this.checked){
-			$("#selectAll").prop("checked", false);
-		}
-	});
+       function previewImage(event) {
+  var input = event.target;
+  var image = document.getElementById('preview');
+  if (input.files && input.files[0]) {
+    image.src = URL.createObjectURL(input.files[0]);
+  }
+}
+
+    $(document).ready(function () {
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+
+        var checkbox = $('table tbody input[type="checkbox"]');
+        $("#selectAll").click(function () {
+            if (this.checked) {
+                checkbox.each(function () {
+                    this.checked = true;
+                });
+            } else {
+                checkbox.each(function () {
+                    this.checked = false;
+                });
+            }
+        });
+        checkbox.click(function () {
+            if (!this.checked) {
+                $("#selectAll").prop("checked", false);
+            }
+        });
+    });
+    $(document).ready(function () {
+        $('#deleteForm').submit(function (e) {
+            e.preventDefault();
+            var ids = [];
+            $('input[type=checkbox]:checked').each(function () {
+                ids.push($(this).val());
+            });
+            $('#deleteIds').val(ids.join(','));
+            $(this).unbind('submit').submit();
+        });
+    });
+
+
+
+    $(document).ready(function () {
+        $('.delete').on('click', function () {
+            var id = $(this).data('id');
+            $('#deleteId').val(id);
+        });
+    });
+
+    //$(document).ready(function(){
+    //    $('.pagin')
+    //}
+
+
+
+    // sorting function😒
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("table");
+        switching = true;
+        // Set the sorting direction to ascending:
+        dir = "asc";
+        /* Make a loop that will continue until
+        no switching has been done: */
+        while (switching) {
+            // Start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /* Loop through all table rows (except the
+            first, which contains table headers): */
+            for (i = 1; i < (rows.length - 1); i++) {
+                // Start by saying there should be no switching:
+                shouldSwitch = false;
+                /* Get the two elements you want to compare,
+                one from current row and one from the next: */
+                x = rows[i].getElementsByTagName("td")[n];
+                y = rows[i + 1].getElementsByTagName("td")[n];
+                /* Check if the two rows should switch place,
+                based on the direction, asc or desc: */
+                if (dir === "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        // If so, mark as a switch and break the loop:
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir === "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        // If so, mark as a switch and break the loop:
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                /* If a switch has been marked, make the switch
+                and mark that a switch has been done: */
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                // Each time a switch is done, increase this count by 1:
+                switchcount++;
+            } else {
+                /* If no switching has been done AND the direction is "asc",
+                set the direction to "desc" and run the while loop again. */
+                if (switchcount === 0 && dir === "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        $('th[data-sortable="true"]').click(function () {
+            var table = $(this).parents('table').eq(0);
+            var rows = table.find('tr:gt(0)').toArray().sort(compare($(this).index()));
+
+            this.asc = !this.asc;
+            if (!this.asc) {
+                rows = rows.reverse();
+            }
+
+            for (var i = 0; i < rows.length; i++) {
+                table.append(rows[i]);
+            }
+        });
+
+        function compare(index) {
+            return function (a, b) {
+                var valA = getCellValue(a, index);
+                var valB = getCellValue(b, index);
+                return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB);
+            };
+        }
+
+        function getCellValue(row, index) {
+            return $(row).children('td').eq(index).text();
+        }
+    });
+
+    $(document).ready(function () {
+        $('.toggle-button').click(function () {
+            var select = $(this).siblings('select');
+            select.toggle();
+        });
+    });
+        // JavaScript function to handle updating employee data
+    // JavaScript function to handle updating employee data
+        function handleUpdateEmployee(employeeId) {
+            // Set the employee ID in the hidden input field of the update modal
+            document.getElementById('updateEmployeeId').value = employeeId;
+
+            // Fetch existing employee details and populate the form fields
+            fetchEmployeeDetails(employeeId);
+        }
+
+        // JavaScript function to fetch existing employee details and populate the update modal
+        function fetchEmployeeDetails(employeeId) {
+            // AJAX request to fetch employee details
+            fetch('getEmployeeDetails?id=' + employeeId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Populate form fields in the update modal with the retrieved employee details
+                    document.getElementById('pic').value = data.filePath;
+                    document.getElementById('firstName').value = data.firstName;
+                    document.getElementById('lastName').value = data.lastName;
+                    document.getElementById('email').value = data.email;
+                    // Parse the date string received from the server
+                    const date = new Date(data.dob);
+                    // Format the date in the desired format (YYYY-MM-DD)
+                    const formattedDate = date.toISOString().split('T')[0];
+                    // Set the formatted date as the value of the "dob" input field
+                    document.getElementById('dob').value = formattedDate;
+                    document.getElementById('location').value = data.location;
+                    document.getElementById('phoneNo').value = data.phoneNo;
+                    // Assuming data.gender contains the gender value from JSON (e.g., "Male" or "Female")
+                    document.getElementById('manager').value = data.manager;
+                    document.getElementById('job').value = data.job;
+                    document.getElementById('salary').value = data.salary;
+                    document.getElementById('project').value = data.project;
+                    var gender = data.gender;
+// Check the appropriate radio button based on the gender value
+                    if (gender === "Male") {
+                    document.getElementById("male").checked = true;
+                    } else if (gender === "Female") {
+                    document.getElementById("female").checked = true;
+                    }
+                     console.log(data.empStatus);
+                     
+                    var empStatus = data.empStatus;
+                    var empStatusSelect = document.getElementById('empStatus');
+
+// Loop through each option in the select element
+
+                    for (var i = 0; i < empStatusSelect.options.length; i++) {
+                    var option = empStatusSelect.options[i];
+    
+    // Check if the option value matches the employee status
+                    if (option.value === empStatus) {
+        // Set the selected attribute for the matching option
+                    option.selected = true;
+        // Exit the loop since we found the matching option
+                    break;
+    }
+}
+   
+                })
+                .catch(error => console.error('Error fetching employee details:', error));
+        }
+
+   function readURL(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+      $('#pic-preview').attr('src', e.target.result);
+    };
+
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+$("#pic").change(function() {
+  readURL(this);
 });
 
-$(document).ready(function(){
-    $('.delete').on('click', function(){
-        var id = $(this).data('id');
-        $('#deleteId').val(id);
+
+// Function to handle AJAX request
+    function fetchFilteredRecords() {
+        var locationValues = getSelectedValues('location-filter');
+        var genderValues = getSelectedValues('gender-filter');
+        var managerValues = getSelectedValues('manager-filter');
+        var projectValues = getSelectedValues('project-filter');
+        var jobValues = getSelectedValues('job-filter');
+        
+        // AJAX request to fetch records based on selected values
+        // You need to replace '/fetchRecords' with your actual endpoint URL
+        $.ajax({
+            url: '/fetchRecords',
+            type: 'GET',
+            data: {
+                locations: locationValues,
+                genders: genderValues,
+                managers: managerValues,
+                projects: projectValues,
+                jobs: jobValues
+            },
+            success: function(response) {
+                // Handle the response data here (e.g., update the UI with fetched records)
+                console.log(response);
+            },
+            error: function(xhr, status, error) {
+                // Handle errors here
+                console.error(error);
+            }
+        });
+    }
+    
+    // Function to get selected values from a multi-select element
+    function getSelectedValues(selectId) {
+        var selectedValues = [];
+        $('#' + selectId + ' option:selected').each(function() {
+            selectedValues.push($(this).val());
+        });
+        console.log(selectedValues);
+        return selectedValues;
+    }
+    
+    // Event listener for select boxes
+    $('.toggle-button').click(function() {
+        $(this).siblings('select').toggle();
     });
-});
-$(document).ready(function(){
-    $('.update').on('click', function(){
-        var id = $(this).data('id');
-        $('#updateId').val(id);
+    
+    // Event listener for option selection
+    $('select[multiple]').change(function() {
+        fetchFilteredRecords();
     });
-});
-//$(document).ready(function(){
-//    $('.pagin')
-//}
-$(document).ready(function(){
-    $('.edit').on('click', function(){
-        var id = $(this).data('id');
-        $('#updateId').val(id);
+//
+    $(document).ready(function() {
+        // Event listener for filter select boxes
+        $('.filter-select').change(function() {
+            // Get selected filter values
+            var selectedFilters = {};
+            $('.filter-select').each(function() {
+                var filterId = $(this).attr('id');
+                var selectedOptions = $(this).val();
+                selectedFilters[filterId] = selectedOptions;
+            });
+
+            // Send AJAX request to fetch filtered records
+            $.ajax({
+                url: 'FetchRecordsServlet',
+                type: 'POST',
+                data: selectedFilters,
+                success: function(response) {
+                    // Update table with filtered records
+                    $('#employee-table tbody').html(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching filtered records:', error);
+                }
+            });
+        });
     });
-});
+  
+    
+    
+    
+    
+     $(document).ready(function(){
+        <%-- Check if the deleteMessage is not empty --%>
+        <% if(request.getAttribute("deleteMessage") != null && !((String)request.getAttribute("deleteMessage")).isEmpty()) { %>
+            // Set the delete message text
+            var deleteMessage = "${deleteMessage}";
+            $("#deleteMessageText").text(deleteMessage);
+            
+            // Show the delete message modal
+            $("#deleteMessage").modal("show");
+        <% } %>
+    });
+    
 </script>
+
+
+
 </head>
 <body>
 <div class="container-xl">
-	<div class="table-responsive">
-		<div class="table-wrapper">
-			<div class="table-title">
-				<div class="row">
-					<div class="col-sm-6">
-						<h2>Manage <b>Employees</b></h2>
-					</div>
-					<div class="col-sm-6">
-                                            
-  
-                                            <div align="right">
-                                                
-                                                
-                                                <form action="export" method="get">
-                                                    <button type="submit" class="btn btn-success">Export To Excel</button>
-                                                </form>
-                                            </div>
-						<a href="#filterModal" class="btn btn-success" data-toggle="modal"><i class="material-icons">&#xE147;</i> <span>filter</span></a>
-						<a href="#new" class="btn btn-success" data-toggle="modal"><i class="material-icons">&#xE147;</i> <span>Add</span></a>
-						<a href="#delete" class="btn btn-danger" data-toggle="modal"><i class="material-icons">&#xE15C;</i> <span>Delete</span></a>	
-                                                
-					<form action="search" method="get" class="form-inline">
-                <div class="form-group">
-                    <input type="text" name="searchKeyword" data-toggle="tooltip" title=" Search by Name,ID,email,phone_no "  class="form-control" placeholder="Search by Name,ID,email,phone_no">
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Search</button>
-            </form>
-                                                
-                                        </div>
-				</div>
-			</div>
-			<table class="table table-striped  table-hover " >
-				<thead>
-					<tr>
-						<th>
-							<span class="custom-checkbox">
-								<input type="checkbox" id="selectAll">
-								<label for="selectAll"></label>
-							</span>
-						</th>
-                                                    <th>Pic</th>
-                                                    <th>#ID</th>
-                                                    <th>First Name</th>
-                                                    <th>Last Name</th>
-                                                    <th>Email</th>
-                                                    <th>DoB</th>
-                                                    <th>Location</th>
-                                                    <th>Phone</th>
-                                                    <th>Gender</th>
-                                                    <th>Manager</th>
-                                                    <th>Project</th>
-                                                    <th>Job</th>
-                                                    <th>Salary</th>
-                                                    <th>Status</th>
-                                                 
-                                                    <th>Actions</th>
-					</tr>
-				</thead>
-				<tbody >
-					 <c:forEach var="employee" items="${listEmployees}">
-    <tr>
-        <td>
-            <span class="custom-checkbox">
-                <input type="checkbox" id="checkbox1" name="options[]" value="1">
-                <label for="checkbox1"></label>
-            </span>
-        </td>
-         <td>
-            <img src="data:image/jpeg;base64,${employee.profilePicture}">
-        </td>
-        <td>${employee.employee_id}</td>
-        <td>${employee.firstName}</td>
-        <td>${employee.lastName}</td>
-        <td>${employee.email}</td>
-        <td>${employee.dob}</td>
-        <td>${employee.location}</td>
-        <td>${employee.phoneNo}</td>
-        <td>${employee.gender}</td>
-        <td>${employee.manager}</td>
-        <td>${employee.project}</td>
-        <td>${employee.job}</td>
-        <td>${employee.salary}</td>
-        <td>${employee.empStatus}</td>
-        <td>
-            
-            <a href="#update" class="edit" data-toggle="modal" data-id="${employee.id}"><i class="material-icons" data-toggle="tooltip" title="Edit">&#xE254;</i></a>
+    <div class="table-responsive">
+        <div class="table-wrapper">
+            <div class="table-title">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <h2><b><a href="list" style="color: #fff">Manage Employees</a></b></h2>
+                    </div>
+                    <div class="col-sm-6">
+                        <div align="right">
+                            
+                            <div class="btn-group">
+                                <a href="#new" class="btn btn-success" data-toggle="modal"><i class="material-icons">&#xE147;</i>
+                                    <span>Add</span></a>
+                                <a href="#delete1" class="btn btn-danger" data-toggle="modal"><i class="material-icons">&#xE15C;</i>
+                                    <span>Delete</span></a>
+                                <form class="export" action="export" method="get" enctype="multipart/form-data">
+                                <button type="submit" class="btn btn-success">Export To Excel</button>
+                            </form>
+                            </div>
+                        </div>
+                        <div class="form-exp">
+                            <form action="search" method="get" class="form-inline">
+                                <input type="text" name="searchKeyword" data-toggle="tooltip"
+                                       title=" Search by Name,ID,email,phone_no " class="form-control"
+                                       placeholder="Search by Name,ID,email,phone_no">
+                                <button type="submit" class="btn btn-success">Search</button>
+                            </form>
+                        </div>
 
-            <a href="#delete" class="delete" data-toggle="modal" data-id="${employee.id}"><i class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i></a>
-        </td>
-    </tr>
-</c:forEach>
+                    </div>
+				</div>
+                            
+                            <div class="row">
+                                <div class="col-sm-6">      
+                                    <table class="filter-table">
+                                        <thead>
+                                            <tr class="filters">
+                                                <th>
+                                                    <div class="selects">
+                                                    <button class="toggle-button">City&#9660;</button>
+                                                    <select id="location-filter"  name="location-filter"  style="position: relative" multiple>
+                                                        <c:forEach var="location" items="${EmployeeDao.getAllLocations()}">
+                                                            <option>${location}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    </div>                                                </th>
+                                                <th> 
+                                                     <div class="selects">
+                                                    <button class="toggle-button">Gender&#9660;</button>
+                                                    <select id="gender-filter"  style="position: relative" name="gender-filter" multiple>
+                                                        <c:forEach var="gender" items="${EmployeeDao.getAllGenders()}">
+                                                            <option>${gender}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                     </div>
+                                                </th>
+                                                <th>
+                                                    <div class="selects">
+                                                    <button class="toggle-button">Manager&#9660;</button>
+                                                    <select id="manager-filter"   style="position: relative"  name="manager-filter"  multiple>
+                                                        <c:forEach var="manager" items="${EmployeeDao.getAllManagers()}">
+                                                            <option>${manager}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    </div>
+                                                </th>
+                                            
+                                      
+
+                                                <th><div class="selects">
+                                                    <button class="toggle-button">Project&#9660;</button>
+                                                    <select id="project-filter"  name="location-filter"  multiple>
+                                                        <c:forEach var="project" items="${EmployeeDao.getAllProjects()}">
+                                                            <option>${project}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    </div>
+                                                </th>
+                                                <th>
+                                                    <div class="selects">
+                                                        <button class="toggle-button">Job&#9660;</button>
+                                                    <select id="job-filter"  name="gender-filter" multiple>
+                                                        <c:forEach var="job" items="${EmployeeDao.getAllJobs()}">
+                                                            <option>${job}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    
+
+                    <table class="table table-striped table-responsive table-hover " >
+                        <thead>
+                            <tr>
+                               <th>
+    <span class="custom-checkbox">
+        <input type="checkbox" class="select-checkbox" id="selectAll">
+        <label for="selectAll"></label>
+    </span>
+</th>
+                                <th>Pic</th>
+                                <th data-sortable="true" >#ID</th>
+                                <th data-sortable="true" >First Name</th>
+                                <th data-sortable="true" >Last Name</th>
+                                <th data-sortable="true" >Email</th>
+                                <th data-sortable="true" >DoB</th>
+                                <th data-sortable="true" >City</th>
+                                <th data-sortable="true" >Phone</th>
+                                <th data-sortable="true" >Gender</th>    
+                                <th data-sortable="true" >Manager</th>
+                                <th data-sortable="true" >Project</th>
+                                <th data-sortable="true" >Job</th>
+                                <th data-sortable="true" >Salary</th>
+                                <th data-sortable="true" >Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody >
+                            
+                            <c:forEach var="employee" items="${listEmployees}">
+                                <tr>
+                                    <td>
+                                        <span class="custom-checkbox">
+                                            <input type="checkbox" id="checkbox1" name="options[]" value="${employee.id}">
+                                            <label for="checkbox1"></label>
+                                        </span>
+                                    </td>
+                                    <td><img src="${pageContext.request.contextPath}/images/${fileName}" alt="img"></td>
+                                    <td>${employee.employeeId}</td>
+                                    <td>${employee.firstName}</td>
+                                    <td>${employee.lastName}</td>
+                                    <td>${employee.email}</td>
+                                    <td>${employee.dob}</td>
+                                    <td>${employee.location}</td>
+                                    <td>${employee.phoneNo}</td>
+                                    <td>${employee.gender}</td>
+                                    <td>${employee.manager}</td>
+                                    <td>${employee.project}</td>
+                                    <td>${employee.job}</td>
+                                    <td>${employee.salary}</td>
+                                    <td>${employee.empStatus}</td>
+                                    <td>
+
+                                            <a href="#update" class="edit" data-toggle="modal" onclick="handleUpdateEmployee(${employee.id})">
+                                                <i class="material-icons" data-toggle="tooltip" title="Edit">&#xE254;</i>
+                                            </a>
+
+
+                                        <a href="#delete2" class="delete" data-toggle="modal" data-id="${employee.id}"><i class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i></a>
+                                    </td>
+                                </tr>
+                            </c:forEach>
 			</tbody>
 			</table>
                     
-                        <div class="clearfix">
+     <div class="clearfix">
     <div class="hint-text">
-        Showing <b>${listEmployees.size()}</b> out of <b>${totalPages*5}</b> entries
+        Showing <b>${listEmployees.size()+(currentPage -1)*5}</b> out of <b>${count}</b> entries
     </div>
     <ul class="pagination">
         <c:if test="${currentPage > 1}">
             <li class="page-item disabled"><a href="list?page=${currentPage - 1}">&laquo; Prev</a></li>
         </c:if>
         <c:forEach var="pageNumber" begin="1" end="${totalPages}">
-            <li class="page-item active"> <a href="list?page=${pageNumber}">${pageNumber}</a></li>
+            <li class="page-item ${pageNumber == currentPage ? 'active' : ''}">
+                <a href="list?page=${pageNumber}">${pageNumber}</a>
+            </li>
         </c:forEach>
         <c:if test="${currentPage < totalPages}">
-            <li class="page-item">  <a href="list?page=${currentPage + 1}">Next &raquo;</a></li>
+            <li class="page-item">  
+                <a href="list?page=${currentPage + 1}">Next &raquo;</a>
+            </li>
         </c:if>
     </ul>
-</div>
-                </div>
+     </div>
+        </div>
 	</div>        
-
-
 <div id="new" class="modal fade">
     <div class="modal-dialog modal-lg"> 
         <div class="modal-content">
-            <form action="insert" method="post">
+            <form action="insert" method="post" enctype="multipart/form-data" >
                 <div class="modal-header">						
                     <h4 class="modal-title">Add Employee</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -505,15 +913,19 @@ $(document).ready(function(){
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <!-- Left column -->
+                        <!--Left column -->
                             
-                            <div class="form-group">
-                                 <input type="file" name="profilePictureFile">
-                            </div>
-                                 
+                            
+                           
+  <div class="form-group">
+  <label>Employee Pic*</label>
+  <input type="file" id="pic" name="pic"  onchange="previewImage(event)" class="form-control" required>
+  <img id="preview" alt="Preview Image"  >
+</div>  
                             <div class="form-group">
                                 <label>First Name *</label>
-                                <input type="text" name="firstName" class="form-control" required>
+                                <input type="text" name="firstName" class="form-control"  required>
+
                             </div>
                             <div class="form-group">
                                 <label>Last Name *</label>
@@ -528,24 +940,24 @@ $(document).ready(function(){
                                 <input type="date" name="dob" max="2006-02-12" min="1964-02-12" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label>Location *</label>
-                                <textarea class="form-control" name="location" required></textarea>
+                                <label>City *</label>
+                                <input type="text" class="form-control" name="location" required>
                             </div>
+                            
+                        </div>
+                        <div class="col-md-6"><!--
+                            <-- Right column -->
                              <div class="form-group">
                                 <label>Phone No. *</label>
                                 <input type="tel" pattern="[5-9]{1}[0-9]{9}" name="phoneNo" class="form-control" required>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- Right column -->
-                            
                             <div class="form-group">
                                 <label>Gender *</label>
                                 <br>
-                                <input type="radio" id="male" name="gender" value="male">
+                                <input type="radio" id="gender" name="gender" value="male">
                                 <label for="male">Male</label>
                                 &nbsp;&nbsp;
-                                <input type="radio" id="female" name="gender" value="female">
+                                <input type="radio" id="gender" name="gender" value="female">
                                 <label for="female">Female</label>
                             </div>
                             <div class="form-group">
@@ -577,186 +989,133 @@ $(document).ready(function(){
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="reset" class="btn btn-danger" data-dismiss="modal">Clear</button>
-                    <button type="submit" class="btn btn-success">${employee != null ? 'Update' : 'Save'}</button>
+                       <button type="reset" class="btn btn-danger" data-dismiss="modal">Clear</button>
+                    <button type="submit" class="btn btn-success">Save</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+    <div id="update" class="modal fade" > 
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="updateEmployeeForm" action="update" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Update Employee</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="updateEmployeeId" name="id" >
 
-    <div id="update" class="modal fade">
-    <div class="modal-dialog modal-lg"> <!-- Added modal-lg class for large modal -->
-        <div class="modal-content">
-            <form id="updateForm" action="update" method="post">
-                <input type="hidden" id="updateId" name="id">
-                <div class="modal-header">						
-                    <h4 class="modal-title">Edit Employee</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <!-- Left column -->
+
+                        <div class="row">
+                            <div class="col-md-6">
                               <div class="form-group">
-                                 <input type="file" name="profilePictureFile">
+                                <label>Employee Pic *</label>
+                                 <input type="file" id="pic" name="pic"  onchange="previewImage(event)" class="form-control" required>
+                                <img id="preview" alt="Preview Image"  >
+                              </div>
+                                <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" name="firstName" id="firstName" class="form-control"  required><br>
+                                </div>
+
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="lastName" id="lastName" class="form-control"><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" id="email"  class="form-control"><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" name="dob" id="dob" class="form-control"><br>
+                    </div>
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" name="location" id="location" class="form-control"><br>
+                    </div>
+                   
                             </div>
-                            <div class="form-group">
-                                <label>First Name *</label>
-                                <input type="text" name="firstName" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Last Name *</label>
-                                <input type="text" name="lastName" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label>E-mail *</label>
-                                <input type="email" name="email" class="form-control" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Date Of Birth *</label>
-                                <input type="date" name="dob" max="2006-02-12" min="1964-02-12" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Location *</label>
-                                <textarea class="form-control" name="location" required></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Phone No. *</label>
-                                <input type="tel" pattern="[5-9]{1}[0-9]{9}" name="phoneNo" class="form-control" required>
-                            </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                             
+                        <label>Phone No.</label>
+                        <input type="tel" pattern="[5-9]{1}[0-9]{9}" id="phoneNo"  name="phoneNo" class="form-control"><br>
+                    </div>
+                        <div class="form-group">
+                            <label>Gender</label><br>
+                            <input type="radio" id="male" name="gender" value="Male">
+                            <label for="male">Male</label>
+                            &nbsp;              &nbsp;
+                            <input type="radio" id="female" name="gender" value="Female">
+                            <label for="female">Female</label><br>
                         </div>
-                        <div class="col-md-6">
-                            <!-- Right column -->
-                            <div class="form-group">
-                                <label>Gender *</label>
-                                <br>
-                                <input type="radio" id="male" name="gender" value="Male">
-                                <label for="male">Male</label>
-                                &nbsp;&nbsp;
-                                <input type="radio" id="female" name="gender" value="Female">
-                                <label for="female">Female</label>
-                            </div>
-                            <div class="form-group">
-                                <label>Manager</label>
-                                <input type="text" name="manager" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label>Project</label>
-                                <input type="text" name="project" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label>Job *</label>
-                                <input type="text" class="form-control" name="job" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Salary *</label>
-                                <input type="text" class="form-control" name="salary" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="empStatus">Employee Status:</label><br>
-                                <select id="empStatus" name="empStatus" class="form-control">
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="DEPARTED">Departed</option>
-                                    <option value="RETIRED">Retired</option>
-                                    <option value="AWOL">AWOL</option>
-                                </select>
-                            </div>
+                    <div class="form-group">
+                        <label>Manager</label>
+                        <input type="text" name="manager" id="manager" class="form-control"><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Project</label>
+                        <input type="text" name="project" id="project" class="form-control"><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Job</label>
+                        <input type="text" name="job" id="job" class="form-control" required><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Salary</label>
+                        <input type="text" name="salary" id="salary" class="form-control" required><br>
+                    </div>
+                    <div class="form-group">
+                        <label>Employee Status</label><br>
+                <select id="empStatus" name="empStatus" class="form-control">
+                    <option value="ACTIVE">Active</option>
+                    <option value="DEPARTED">Departed</option>
+                    <option value="RETIRED">Retired</option>
+                    <option value="AWOL">AWOL</option>
+                </select><br>
+
+                    </div>
+                        </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" name="update">${employee != null ? 'Update' : 'Save'}</button>
-                </div>
+                        <div class="modal-footer">
+                            <button type="reset" class="btn btn-danger" data-dismiss="modal">Clear</button>
+                            <button type="submit" class="btn btn-success">Update</button>
+                        </div>
             </form>
         </div>
     </div>
-</div>
-<!--
--->
-
-
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-        <form action="filter" method="get">
-      <div class="modal-header">
-        <h5 class="modal-title" id="filterModalLabel">Employee Filter</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>   
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-            
-         <div class="form-group">
-        <label for="location">Location:</label>
-        <select id="location" name="location" class="form-control" multiple>
-            <c:forEach var="location" items="${locations}">
-                <option value="${location}">${location}</option>
-            </c:forEach>
-        </select>
     </div>
-          
-          <div class="form-group">
-            <label for="gender">Gender:</label>
-            <select id="gender" name="gender" class="form-control" multiple>
-                 <c:forEach var="gender" items="${genders}">
-              <option value="${gender}">${gender}</option>
-              </c:forEach>
-            </select>
-          </div>
-            <div class="form-group">
-            <label for="manager">Manager</label>
-            <select id="location" name="location" class="form-control" multiple>
-              <c:forEach var="manager" items="${managers}">
-                <option value="${manager}">${manager}</option>
-              </c:forEach>
-            </select>
-          </div>
-                        </div>
-                         <div class="col-md-6">
-            <div class="form-group">
-            <label for="project">Project</label>
-            <select id="project" name="project" class="form-control" multiple>
-              <c:forEach var="project" items="${projects}">
-                <option value="${project}">${project}</option>
-              </c:forEach>
-            </select>
-          </div>
-              
-            <div class="form-group">
-            <label for="job">Dob</label>
-            <select id="job" name="job" class="form-control" multiple>
-              <c:forEach var="job" items="${jobRoles}">
-                <option value="${job}">${job}</option>
-              </c:forEach>
-            </select>
-          </div>
-             <div class="form-group">
-            <label for="salary">Salary</label>
-            <input type="range" name="minSalary" min="10000" max="500000" step="1000" value="0">
-            <input type="range" name="maxSalary" min="0" max="100000" step="1000" value="100000">
 
-          </div>
-                         </div>
-                    </div>
-          </div>
-            <div class="modal-footer">
-          <button type="submit"  class="btn btn-primary">Apply Filters</button>
-            </div>
-        </form>
-    </div>
-  </div>
-</div>
-
-<div id="delete" class="modal fade">
+<div id="delete1" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="deleteForm" action="delete" method="post">
+            <form id="deleteForm" action="deleteEmployees" method="post">
+                <input type="hidden" id="deleteIds" name="ids">
+                <div class="modal-header">						
+                    <h4 class="modal-title">Delete Employee</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div class="modal-body">					
+                    <p>Are you sure you want to delete the selected records?</p>
+                    <p class="text-warning"><small>This action cannot be undone.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="delete2" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="delete" action="delete" method="post">
                 <input type="hidden" id="deleteId" name="id">
                 <div class="modal-header">						
                     <h4 class="modal-title">Delete Employee</h4>
@@ -774,6 +1133,24 @@ $(document).ready(function(){
         </div>
     </div>
 </div>
+</div>
+    
+    
+    <div id="deleteMessage" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">						
+                <h4 class="modal-title">Delete Message</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            </div>
+            <div class="modal-body">					
+                <p id="deleteMessageText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -4,37 +4,30 @@
  */
 package suktha.model;
 
-/**
- *
- * @author Shashank
- */
-import java.io.Serializable;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
-import java.util.Random;
-import org.hibernate.annotations.Type;
-//import org.springframework.web.multipart.MultipartFile;
+
+
 
 
 @Entity
 @Table(name = "employee")
 public class Employee implements Serializable {
+    private static int employeeCounter = 1;
+
+    @Column(name = "image")
+    private String imagePath ;  
+    
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private int id;
 
-    @Column(name = "employee_id", unique = true, nullable = false)
-    private String employee_id;
-    
-     @Lob
-    @Type(type = "org.hibernate.type.BinaryType")
-    private byte[] profilePicture;
-     
-//     @Transient
-//    private MultipartFile profilePictureFile;
+    @Column(name = "employeeId", unique = true, length = 150)
+    private String employeeId;
 
-  
     @Column(name = "first_name", nullable = false, length = 225)
     private String firstName;
 
@@ -58,6 +51,7 @@ public class Employee implements Serializable {
     private String gender;
     
     
+ 
 
     @Column(name = "manager", length = 225)
     private String manager;
@@ -72,48 +66,52 @@ public class Employee implements Serializable {
     private String salary;
 
     @Enumerated(EnumType.STRING)
-    private EmployeeStatus empStatus;
+    @Column(name = "empStatus" )
+    private EmployeeStatus empStatus = EmployeeStatus.ACTIVE;
 
-    @Column(name = "created_by" ,updatable=false)
+    @Column(name = "created_on", updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdBy;
 
-    @Column(name = "updated_by")
+    @Column(name = "updated_on")
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedBy;
+    
+    //getters and setters
 
-    public byte[] getProfilePicture() {
-        return profilePicture;
+    public static int getEmployeeCounter() {
+        return employeeCounter;
     }
 
-    public void setProfilePicture(byte[] profilePicture) {
-        this.profilePicture = profilePicture;
+    public static void setEmployeeCounter(int employeeCounter) {
+        Employee.employeeCounter = employeeCounter;
     }
 
-//    public MultipartFile getProfilePictureFile() {
-//        return profilePictureFile;
-//    }
-//
-//    public void setProfilePictureFile(MultipartFile profilePictureFile) {
-//        this.profilePictureFile = profilePictureFile;
-//    }
+    public String  getImagePath() {
+        return imagePath;
+    }
 
+    public void setImagepath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+    
+    
     
     public int getId() {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+
+
+    public String getEmployeeId() {
+        return employeeId;
     }
 
-    public String getEmployee_id() {
-        return employee_id;
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
     }
 
-    public void setEmployee_id(String employee_id) {
-        this.employee_id = employee_id;
-    }
+
 
     public String getFirstName() {
         return firstName;
@@ -203,14 +201,13 @@ public class Employee implements Serializable {
         this.salary = salary;
     }
 
-   public EmployeeStatus getEmpStatus() {
+    public EmployeeStatus getEmpStatus() {
         return empStatus;
     }
 
     public void setEmpStatus(EmployeeStatus empStatus) {
         this.empStatus = empStatus;
     }
-   
 
     public Date getCreatedBy() {
         return createdBy;
@@ -228,22 +225,18 @@ public class Employee implements Serializable {
         this.updatedBy = updatedBy;
     }
 
-    
-    
 
     public Employee() {
-        
-        this.employee_id = generateEmployee_id();
+        this.employeeId = generateEmployeeId();
         this.createdBy = new Date();
-
     }
 
-    public Employee( String employee_id,String firstName, String lastName, String email, Date dob, String location,
+    public Employee(String imagePath,String employeeId, String firstName, String lastName, String email, Date dob, String location,
                     String phoneNo, String gender, String manager, String project, String job, String salary,
-                   EmployeeStatus empStatus , Date createdBy) {
-        
+                    EmployeeStatus empStatus, Date createdBy) {
         super();
-        this.employee_id = generateEmployee_id();
+        this.imagePath = imagePath;
+        this.employeeId = employeeId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -257,51 +250,36 @@ public class Employee implements Serializable {
         this.salary = salary;
         this.empStatus = empStatus;
         this.createdBy = createdBy;
-        
+
     }
 
-//    public Employee(int id, String employee_id, byte[] profilePicture, MultipartFile profilePictureFile, String firstName, String lastName, String email, Date dob, String location, String phoneNo, String gender, String manager, String project, String job, String salary, EmployeeStatus empStatus, Date createdBy, Date updatedBy) {
-//        super();
-//        this.id = id;
-//        this.employee_id = employee_id;
-//        this.profilePicture = profilePicture;
-//        this.profilePictureFile = profilePictureFile;
-//        this.firstName = firstName;
-//        this.lastName = lastName;
-//        this.email = email;
-//        this.dob = dob;
-//        this.location = location;
-//        this.phoneNo = phoneNo;
-//        this.gender = gender;
-//        this.manager = manager;
-//        this.project = project;
-//        this.job = job;
-//        this.salary = salary;
-//        this.empStatus = empStatus;
-//        this.createdBy = createdBy;
-//        this.updatedBy = updatedBy;
-//    }
-     private String generateEmployee_id() {
-        Random random = new Random();
-        int randomNumber = random.nextInt(1111); 
-        String paddedNumber = String.format("%04d", randomNumber); 
-        return "SUKT" + paddedNumber;
-    }
-     
-     @PreUpdate
+
+    @PreUpdate
     protected void onUpdate() {
-        this.updatedBy = new Date(); 
+        this.updatedBy = new Date();
     }
 
-  
- 
+
+    public static String generateEmployeeId() {
+        String prefix = "SUKTH";
+        String paddedCounter = String.format("%04d", employeeCounter++);
+        return prefix + paddedCounter;
+    }
+
+
     public enum EmployeeStatus {
-    ACTIVE,
-    DEPARTED,
-    RETIRED,
-    AWOL;
+        ACTIVE,
+        DEPARTED,
+        DELETED,
+        RETIRED,
+        AWOL
+    }
+   public interface ApplicationCanstant {
+	String FILE_LOCATION = "C:\\Program Files\\Java\\server\\Tomcat_9v";
+	String TEMP_FILE_LOCATION = "C:\\Program Files\\Java\\server\\Tomcat_9v\\images";
+	
 
+    
 }
 }
-
 

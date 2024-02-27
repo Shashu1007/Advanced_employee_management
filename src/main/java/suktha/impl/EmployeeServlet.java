@@ -1,52 +1,51 @@
 package suktha.impl;
 
+import com.google.gson.Gson;
+import java.awt.Image;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-
-import java.util.Date;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
-
+import java.io.OutputStream;
+import java.nio.file.Paths;
 import org.hibernate.HibernateException;
 import suktha.dao.EmployeeDao;
 import suktha.model.Employee;
-import suktha.model.Employee.EmployeeStatus;
 
+
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.*;
+import java.sql.SQLException;
+import java.text.*;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.*;
+import suktha.model.Employee.EmployeeStatus;
+@MultipartConfig
 @WebServlet("/")
+
 public class EmployeeServlet extends HttpServlet {
-    private EmployeeDao employeedao;
-    private final int RECORDS_PER_PAGE = 10;
-    private static final long serialVersionUID = 1L;    
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
-        employeedao = new EmployeeDao();
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException ,HibernateException {
-       
+            throws ServletException, IOException, HibernateException {
+
         String action = request.getServletPath();
 
         try {
             switch (action) {
-                case "/new":
-                    showNewForm(request, response);
-                    break;
+                
                 
                 case "/insert":
                     insertEmployee(request, response);
@@ -54,41 +53,38 @@ public class EmployeeServlet extends HttpServlet {
                 case "/delete":
                     deleteEmployee(request, response);
                     break;
-                case "/edit":
-                    showEditForm(request, response);
-                    break;
                 case "/update":
                     updateEmployee(request, response);
+                    break;
+                case "/getEmployeeDetails":
+                    getEmployeeDetails(request, response);
                     break;
                 case "/search":
                     searchEmployee(request, response);
                     break;
-                
-                case "/filter":
-                         
-                List<String> locations = EmployeeDao.getAllDistinctLocations();
-                List<String> genders = EmployeeDao.getAllDistinctGenders();
-                List<String> managers = EmployeeDao.getAllDistinctManagers();
-                List<String> projects = EmployeeDao.getAllDistinctProjects();
-                List<String> jobs = EmployeeDao.getAllDistinctJobs();
-
-                // Set attributes for use in JSP
-                request.setAttribute("locations", locations);
-                request.setAttribute("genders", genders);
-                request.setAttribute("managers", managers);
-                request.setAttribute("projects", projects);
-                request.setAttribute("jobs", jobs);
-
-                // Forward to filter form JSP
-                RequestDispatcher dispatcher = request.getRequestDispatcher("filter-form.jsp");
-                dispatcher.forward(request, response);
-                break;
-
                 case "/list":
                     listEmployee(request, response);
                     break;
+                    
+                case "/deleteEmployees":
+                    deleteEmployees(request, response);
+                    break;
+                
+                case "/deleteAllEmployee":
+                      deleteAllEmployees(request,response);
+                      break;
+ //               case "/filter":
+//
+//                    filterEmployees(request, response);
+//                    break;
+                    
+                case   "/login":
+                      login(request,response);
+                      break;
+                
+                
                 default:
-                    listEmployee(request, response);
+                   response.sendRedirect("login.jsp");
                     break;
             }
         } catch (SQLException ex) {
@@ -98,231 +94,313 @@ public class EmployeeServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred.");
         }
     }
+
     @Override
-protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException ,HibernateException {
-    doGet(request, response);
-}
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, HibernateException {
+        doGet(request, response);
+    }
 
     private void listEmployee(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException, ServletException {
-    long count = EmployeeDao.getEmployeeCounts();
-    int page = 1;
-    int recordsPerPage = 05; 
-    
-    if (request.getParameter("page") != null) {
-        page = Integer.parseInt(request.getParameter("page"));
-    }
-    
-    int start = (page - 1) * recordsPerPage;
-    
-   List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-long totalCount = EmployeeDao.getEmployeeCount(); // Use long instead of int
-int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
 
-request.setAttribute("listEmployees", listEmployees);
-request.setAttribute("totalPages", totalPages);
-request.setAttribute("currentPage", page);
-request.setAttribute("count", totalCount); // Set the totalCount attribute
+        int page = 1;
+        int recordsPerPage = 5;
 
-RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
-dispatcher.forward(request, response);
-}
+        if (request.getParameter("page") != null) {
+            page = Integer.parseInt(request.getParameter("page"));
+        }
 
-private void searchEmployee(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException, ParseException {
-    String searchKeyword = request.getParameter("searchKeyword");
-    try {
-        List<Employee> searchResult = EmployeeDao.searchEmployees(searchKeyword);
-        request.setAttribute("listEmployees", searchResult);
+        int start = (page - 1) * recordsPerPage;
+
+        List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+        long totalCount = EmployeeDao.getEmployeeCounts(); // Use long instead of int
+        int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+
+        request.setAttribute("listEmployees", listEmployees);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("count", totalCount);
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
         dispatcher.forward(request, response);
-    } catch (SQLException e) {
-        // Handle database error
-        e.printStackTrace();
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error occurred while searching employees.");
     }
-}
-    private void showNewForm(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException ,HibernateException{
-        RequestDispatcher dispatcher = request.getRequestDispatcher("employee-form.jsp");
-        dispatcher.forward(request, response);
-    }
-private void showEditForm(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-    String idParam = request.getParameter("id");
-    if (idParam != null && !idParam.isEmpty()) {
+
+    private void searchEmployee(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, ParseException {
+        String searchKeyword = request.getParameter("searchKeyword");
         try {
-            int id = Integer.parseInt(idParam);
-            Employee existingEmployee = EmployeeDao.getEmployeeById(id);
-            if (existingEmployee != null) {
-                RequestDispatcher dispatcher = request.getRequestDispatcher("employee-form.jsp");
-                request.setAttribute("employee", existingEmployee);
-                dispatcher.forward(request, response);
-            } else {
-                response.getWriter().println("No employee found with the provided ID.");
-            }
-        } catch (NumberFormatException e) {
-            
-            response.getWriter().println("Invalid employee ID format.");
+            List<Employee> searchResult = EmployeeDao.searchEmployees(searchKeyword);
+            request.setAttribute("listEmployees", searchResult);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
+            dispatcher.forward(request, response);
+        } catch (SQLException e) {
+            // Handle database error
             e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error occurred while searching employees.");
         }
-    } else {
-        
-        response.getWriter().println("Employee ID parameter is missing or empty.");
     }
-}
 
-
+   
     private void insertEmployee(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException, ParseException, ServletException {
-            Employee employee = new Employee();
-            String employeeId = employee.getEmployee_id();
-            String firstName = request.getParameter("firstName");
-            String lastName = request.getParameter("lastName");
-            String email = request.getParameter("email");
-            String dobStr=request.getParameter("dob");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Part filePart = request.getPart("profilePictureFile");
-    InputStream inputStream = filePart.getInputStream();
-    byte[] profilePicture = inputStream.readAllBytes();
 
-            @SuppressWarnings("UnusedAssignment")
-            Date dob = null;
-            dob = sdf.parse(dobStr);
-            String location = request.getParameter("location");
-            String phoneNo = request.getParameter("phoneNo"); 
-            String genderStr=request.getParameter("gender");
-            @SuppressWarnings("UnusedAssignment")
-            String gender= null;
-            boolean isMale = false; 
-            if (genderStr != null && genderStr.equals("male")) {
-            isMale = true;
-            }
-            if(isMale){
-                gender="Male";
-            }
-            else{
-                gender="Female";
-            }
-            String manager = request.getParameter("manager");
-            String project = request.getParameter("project");
-            String job = request.getParameter("job");
-            String salary = request.getParameter("salary");
-            String empStatusStr = request.getParameter("empStatus");
-            EmployeeStatus empStatus = EmployeeStatus.valueOf(empStatusStr);
-            Date createdBy = new Date(); 
+
+        try {
+         Part filePart = request.getPart("pic");
+        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
         
-        Employee newEmployee = new Employee(employeeId ,firstName, lastName, email, dob, location, phoneNo, gender, manager, project, job, salary, empStatus ,createdBy );
-        EmployeeDao.addEmployee(newEmployee);
+        // Get the temporary directory path from the servlet context
+        String tempDirPath = getServletContext().getAttribute("javax.servlet.context.tempdir").toString();
+        
+        // Construct the file path in the temporary directory
+        String filePath = tempDirPath + File.separator + fileName;
+        
+        // Save the uploaded file to the temporary directory
+        try (InputStream fileContent = filePart.getInputStream(); 
+                OutputStream outputStream = new FileOutputStream(filePath)) {
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = fileContent.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        }
+        String employeeId = Employee.generateEmployeeId();
+        String firstName = request.getParameter("firstName");
+        String lastName = request.getParameter("lastName");
+        String email = request.getParameter("email");
+        String dobStr = request.getParameter("dob");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date dob = sdf.parse(dobStr);
+        String location = request.getParameter("location");
+        String phoneNo = request.getParameter("phoneNo");
+        String genderStr = request.getParameter("gender");
+        String gender = genderStr.equals("male") ? "Male" : "Female";
+        String manager = request.getParameter("manager");
+        String project = request.getParameter("project");
+        String job = request.getParameter("job");
+        String salary = request.getParameter("salary");
+        String empStatusStr = request.getParameter("empStatus");
+        EmployeeStatus empStatus = EmployeeStatus.ACTIVE;
+        Date createdBy = new Date();
+
+        
+        Employee employee = new Employee(filePath,employeeId, firstName, lastName, email, dob, location, phoneNo, gender,
+                manager, project, job, salary, empStatus, createdBy);
+        EmployeeDao.addEmployee(employee);
+        System.out.println("successfully inserted");
+        }
+        catch (IOException | ServletException e){
+            
+            e.printStackTrace();
+            
+        }
+        
         response.sendRedirect("list");
-}
+    }
 
-        
-    
-private void deleteEmployee(HttpServletRequest request, HttpServletResponse response)
+    private void updateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        // Fetch employee ID from the request parameter
+        String idParam = request.getParameter("id");
+
+        // Check if ID parameter is provided
+        if (idParam != null && !idParam.isEmpty()) {
+            try {
+                // Parse the ID parameter to an integer
+                int id = Integer.parseInt(idParam);
+
+                // Retrieve employee details by ID
+                Employee existingEmployee = EmployeeDao.getEmployeeById(id);
+
+                // Check if the employee with the given ID exists
+                if (existingEmployee != null) {
+                    // Update employee data with the new values from the request parameters
+             
+                    Part filePart = request.getPart("pic");
+                    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String uploadDirectory = "C:/Users/Shashank/Documents/NetBeansProjects/task_1/src/main/webapp/images/";
+                    File file = new File(uploadDirectory + fileName);
+                    String imagepath = uploadDirectory + fileName;
+
+                    InputStream fileContent = filePart.getInputStream(); 
+                    OutputStream outputStream = new FileOutputStream(file); 
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = fileContent.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                    
+                    existingEmployee.setImagepath(imagepath);
+                    existingEmployee.setFirstName(request.getParameter("firstName"));
+                    existingEmployee.setLastName(request.getParameter("lastName"));
+                    existingEmployee.setEmail(request.getParameter("email"));
+
+                    // Parse and set the date of birth
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    try {
+                        existingEmployee.setDob(sdf.parse(request.getParameter("dob")));
+                    } catch (ParseException e) {
+                        e.printStackTrace(); // Handle parsing exception accordingly
+                    }
+
+                    existingEmployee.setLocation(request.getParameter("location"));
+                    existingEmployee.setPhoneNo(request.getParameter("phoneNo"));
+                    existingEmployee.setGender(request.getParameter("gender"));
+                    existingEmployee.setManager(request.getParameter("manager"));
+                    existingEmployee.setProject(request.getParameter("project"));
+                    existingEmployee.setJob(request.getParameter("job"));
+                    existingEmployee.setSalary(request.getParameter("salary"));
+
+                    // Parse and set employee status
+                    String statusStr = request.getParameter("empStatus");
+                    existingEmployee.setEmpStatus(EmployeeStatus.valueOf(statusStr));
+
+                    // Set the updated timestamp
+                    Date updatedBy = new Date();
+                    existingEmployee.setUpdatedBy(updatedBy);
+
+                    // Update employee in the database
+                    EmployeeDao.updateEmployee(existingEmployee);
+                    System.out.println("successfully updated");
+
+                    // Redirect to the employee list page
+                    response.sendRedirect("list");
+                } else {
+                    System.out.println("failed 1");
+                    // If the employee with the given ID does not exist, handle accordingly
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    response.getWriter().write("Employee not found for ID: " + id);
+                }
+            } catch (NumberFormatException e) {
+                // Handle the case where the ID parameter is not a valid integer
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Invalid employee ID format.");
+            }
+        } else {
+             System.out.println("failed 2");
+            // If the ID parameter is missing or empty, return a bad request response
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Employee ID parameter is missing or empty");
+        }
+    }
+
+
+    protected void getEmployeeDetails(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Fetch employee ID from request parameter
+        String idParam = request.getParameter("id");
+
+        // Check if ID parameter is provided
+        if (idParam != null && !idParam.isEmpty()) {
+            try {
+                // Parse ID parameter to an integer
+                int id = Integer.parseInt(idParam);
+
+                // Retrieve employee details by ID
+                Employee employee = EmployeeDao.getEmployeeById(id);
+
+                // Convert employee object to JSON and write it to the response
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(new Gson().toJson(employee));
+            } catch (NumberFormatException e) {
+                // Handle invalid ID format
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Invalid employee ID format.");
+            }
+        } else {
+            // Handle missing or empty ID parameter
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Employee ID parameter is missing or empty.");
+        }
+    }
+
+
+    private void deleteEmployee(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         try {
             String idParam = request.getParameter("id");
             if (idParam != null && !idParam.isEmpty()) {
                 int id = Integer.parseInt(idParam);
-                EmployeeDao.deleteEmployee(id); 
-                response.sendRedirect("list"); 
+                EmployeeDao.deleteEmployee(id);
+                response.sendRedirect("list");
             } else {
                 response.getWriter().println("Employee ID parameter is missing or empty.");
             }
         } catch (NumberFormatException e) {
             response.getWriter().println("Invalid employee ID format.");
         }
-}
-
-private void filterEmployees(HttpServletRequest request, HttpServletResponse response)
-        throws SQLException, IOException, ParseException, ServletException {
-    String[] locations = request.getParameterValues("location");
-    String[] genders = request.getParameterValues("gender");
-    String[] jobRoles = request.getParameterValues("jobRole");
-    int minSalary = 0;
-    int maxSalary = Integer.MAX_VALUE;
+    }
+    private void deleteEmployees(HttpServletRequest request, HttpServletResponse response)
+        throws IOException, ServletException {
     try {
-        minSalary = Integer.parseInt(request.getParameter("minSalary"));
-        maxSalary = Integer.parseInt(request.getParameter("maxSalary"));
+        String idsParam = request.getParameter("ids");
+        if ( idsParam != null && !idsParam.isEmpty() ) {
+            String[] idsArray = idsParam.split(",");
+            List<Integer> ids = new ArrayList<>();
+            for (String id : idsArray) {
+                if(id.equals("on")){
+                continue;
+                }
+                ids.add(Integer.valueOf(id));
+            }
+//            EmployeeDao.deleteEmployees(ids);
+            String deleteMessage = EmployeeDao.deleteEmployees(ids);
+
+            // Set the message as an attribute in the request
+            request.setAttribute("deleteMessage", deleteMessage);
+
+            // Forward the request to the JSP page
+            RequestDispatcher dispatcher = request.getRequestDispatcher("employee.jsp");
+            dispatcher.forward(request, response);
+            response.sendRedirect("list");
+        } else {
+            response.getWriter().println("Employee IDs parameter is missing or empty.");
+        }
     } catch (NumberFormatException e) {
-        // Handle parsing errors, maybe set default values or display an error message
-        e.printStackTrace();
+        response.getWriter().println("Invalid employee ID format.");
     }
-    String[] managers = request.getParameterValues("manager");
-    String[] projects = request.getParameterValues("project");
-    
-    
-    List<Employee> filteredResults = EmployeeDao.filterEmployees(locations, genders, jobRoles, minSalary, maxSalary, managers, projects);
-   
-    request.setAttribute("listEmployees", filteredResults);
-    RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
+    }
+ private void deleteAllEmployees(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException, ParseException {
+    String idsParam = request.getParameter("ids");
+    String statusParam = request.getParameter("status");
+
+    List<Integer> ids = new ArrayList<>();
+    if (idsParam != null) {
+        String[] idArray = idsParam.split(",");
+        for (String idStr : idArray) {
+            ids.add(Integer.valueOf(idStr));
+        }
+    }
+
+    EmployeeStatus status = EmployeeStatus.valueOf(statusParam);
+
+    EmployeeDao.deleteAllEmployees(ids, status);
+
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/employees");
     dispatcher.forward(request, response);
-}
-   
+}private void login(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException, ServletException {
+        try{
+    String username = request.getParameter("username");
+    System.out.println(request.getParameter("username"));
+    String password = request.getParameter("password");
+    System.out.println(request.getParameter("password"));
 
-
-private void updateEmployee(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException, ParseException {
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            String firstName = request.getParameter("firstName");
-            String lastName = request.getParameter("lastName");
-            String email = request.getParameter("email");
-            String dobStr=request.getParameter("dob");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            @SuppressWarnings("UnusedAssignment")
-            Date dob = null;
-            dob = sdf.parse(dobStr);
-            String location = request.getParameter("location");
-            String phoneNo = request.getParameter("phoneNo"); 
-            String genderStr=request.getParameter("gender");
-            @SuppressWarnings("UnusedAssignment")
-            String gender= null;
-            boolean isMale = false; 
-            if (genderStr != null && genderStr.equals("male")) {
-            isMale = true;
-            }
-            if(isMale){
-                gender="Male";
-            }
-            else{
-                gender="Female";
-            }
-            String manager = request.getParameter("manager");
-            String project = request.getParameter("project");
-            String job = request.getParameter("job");
-            String salary= request.getParameter("salary");
-            String empStatusStr = request.getParameter("empStatus");
-            EmployeeStatus empStatus = EmployeeStatus.valueOf(empStatusStr);
-            
-
-            Employee existingEmployee = EmployeeDao.getEmployeeById(id);
-            if (existingEmployee != null) {
-                existingEmployee.setFirstName(firstName);
-                existingEmployee.setLastName(lastName);
-                existingEmployee.setEmail(email);
-                existingEmployee.setDob(dob);
-                existingEmployee.setLocation(location);
-                existingEmployee.setPhoneNo(phoneNo);  
-                existingEmployee.setGender(gender);
-                existingEmployee.setManager(manager);
-                existingEmployee.setProject(project);
-                existingEmployee.setJob(job);
-                existingEmployee.setSalary(salary);
-                existingEmployee.setEmpStatus(empStatus);
-            
-
-                EmployeeDao.updateEmployee(existingEmployee);
-                response.sendRedirect("list");
-            } else {
-                response.getWriter().println("No employee found with the provided ID.");
-            }
-        } catch (NumberFormatException e) {
-            response.getWriter().println("Invalid employee ID format.");
+    // Check if username and password match
+    if (!username.equals("Admin") || !password.equals("Admin@123")) {
+        // Failed login
+        request.setAttribute("error", "Invalid username or password. Please try again.");
+        request.getRequestDispatcher("login.jsp").forward(request, response);
+        return;
     }
-}
-}
-    
 
+    // Successful login
+    response.sendRedirect("list");
+        }
+    catch (IOException e){
+            e.printStackTrace();
+            }
+}
+}

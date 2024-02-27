@@ -45,7 +45,7 @@ public class ExcelExportServlet extends HttpServlet {
             int rowNum = 1;
             for (Employee employee : employees){
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(employee.getEmployee_id()); 
+//                row.createCell(0).setCellValue(employee.getEmployeeId()); 
                 row.createCell(1).setCellValue(employee.getFirstName());
                 row.createCell(2).setCellValue(employee.getLastName());
                 row.createCell(3).setCellValue(employee.getEmail());
