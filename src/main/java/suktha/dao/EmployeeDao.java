@@ -13,11 +13,6 @@ import suktha.model.Employee.EmployeeStatus;
 import suktha.util.ConnectionFactory;
 import suktha.util.HibernateUtil;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -125,6 +120,7 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
                     while (rs.next()) {
                         Employee employee = new Employee();
                         // Populate employee fields from the result set
+                        employee.setImageName(rs.getString("imageName"));
                         employee.setId(rs.getInt("id"));
                         employee.setEmployeeId(rs.getString("employeeId"));
                         employee.setFirstName(rs.getString("first_name"));
@@ -256,31 +252,7 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
 }
 
 
-    public static List<Employee> getEmployeesByIds(List<String> ids) {
-        Transaction transaction = null;
-        List<Employee> employees = null;
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        try {
-            transaction = session.beginTransaction();
-            employees = session.createQuery("from Employee e where e.employeeId IN (:ids)")
-                    .setParameterList("ids", ids)
-                    .list();
-            transaction.commit();
-        } catch (HibernateException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-        }
-        return employees;
-    }
-
-
-  public static void updateEmployee(Employee employee) {
+    public static void updateEmployee(Employee employee) {
     Transaction transaction = null;
     try (Session session = HibernateUtil.getSessionFactory().openSession()) {
         transaction = session.beginTransaction();
@@ -326,28 +298,28 @@ public static List<Employee> getEmployees() {
 }
 
 
-    @SuppressWarnings({"unchecked", "CallToPrintStackTrace"})
-    private void listEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    int page = 1;
-    int recordsPerPage = 5;
-
-    if (request.getParameter("page") != null) {
-        page = Integer.parseInt(request.getParameter("page"));
-    }
-
-    int start = (page - 1) * recordsPerPage;
-
-    List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-    long totalCount = EmployeeDao.getEmployeeCount(); // Assuming you have a method to get total count
-    int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-
-    request.setAttribute("listEmployees", listEmployees);
-    request.setAttribute("totalPages", totalPages);
-    request.setAttribute("currentPage", page);
-
-    RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
-    dispatcher.forward(request, response);
-}
+//    @SuppressWarnings({"unchecked", "CallToPrintStackTrace"})
+//    private void listEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//    int page = 1;
+//    int recordsPerPage = 5;
+//
+//    if (request.getParameter("page") != null) {
+//        page = Integer.parseInt(request.getParameter("page"));
+//    }
+//
+//    int start = (page - 1) * recordsPerPage;
+//
+//    List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+//    long totalCount = EmployeeDao.getEmployeeCount(); // Assuming you have a method to get total count
+//    int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+//
+//    request.setAttribute("listEmployees", listEmployees);
+//    request.setAttribute("totalPages", totalPages);
+//    request.setAttribute("currentPage", page);
+//
+//    RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
+//    dispatcher.forward(request, response);
+//}
 
 
   public static void deleteEmployee(int id) {
@@ -426,6 +398,33 @@ public static List<Employee> getEmployees() {
         e.printStackTrace();
     }
 }
+
+    @SuppressWarnings("null")
+    public static List<Employee> getEmployeesByIds(List<Integer> ids) {
+        Transaction transaction = null;
+        List<Employee> employees = new ArrayList<>(); // Initialize the list
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            transaction = session.beginTransaction();
+            for (Integer id : ids) {
+                Employee employee = session.get(Employee.class, id);
+                if (employee != null) {
+                    employees.add(employee);
+                }
+            }
+            transaction.commit();
+        } catch (HibernateException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+        return employees;
+    }
      
    public static long getEmployeeCount() {
        Session session = HibernateUtil.getSessionFactory().openSession();
@@ -462,7 +461,6 @@ public static List<Employee> getEmployees() {
 }
 
 
-
     public static List<String> getAllGenders() {
         List<String> genders = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -474,7 +472,6 @@ public static List<Employee> getEmployees() {
         return genders;
     }
     
-
     public static List<String> getAllManagers() {
         List<String> managers = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -485,7 +482,6 @@ public static List<Employee> getEmployees() {
         }
         return managers;
     }
-
     public static List<String> getAllProjects() {
         List<String> projects = new ArrayList<>();
         
@@ -497,7 +493,6 @@ public static List<Employee> getEmployees() {
             ex.printStackTrace();
         }
         return projects;
-        
     }
 
     public static List<String> getAllJobs() {

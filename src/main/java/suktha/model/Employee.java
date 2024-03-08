@@ -7,6 +7,7 @@ package suktha.model;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Random;
 
 
 
@@ -14,15 +15,13 @@ import java.util.Date;
 @Entity
 @Table(name = "employee")
 public class Employee implements Serializable {
-    private static int employeeCounter = 1;
+    private static final Random random = new Random();
+    private static int employeeCounter = 0;
 
     @Column(name = "imageName")
     private String imageName;
 
-    @Column(name = "imageData")
-    private byte[] imageData;
-    
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -90,12 +89,12 @@ public class Employee implements Serializable {
         Employee.employeeCounter = employeeCounter;
     }
 
-    public Employee(String imageName, byte[] imageData, String employeeId, String firstName, String lastName, String email, Date dob, String location,
+    public Employee(String imageName, String employeeId, String firstName, String lastName, String email, Date dob, String location,
                     String phoneNo, String gender, String manager, String project, String job, String salary,
                     EmployeeStatus empStatus, Date createdBy) {
         super();
         this.imageName = imageName;
-        this.imageData = imageData;
+
         this.employeeId = employeeId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -121,21 +120,10 @@ public class Employee implements Serializable {
         this.imageName = imageName;
     }
 
-    public byte[] getImageData() {
-        return imageData;
-    }
-    
-    
-    
+
     public int getId() {
         return id;
     }
-
-    public void setImageData(byte[] imageData) {
-        this.imageData = imageData;
-    }
-    
-    
 
 
     public String getEmployeeId() {
@@ -279,7 +267,8 @@ public class Employee implements Serializable {
 
     public static String generateEmployeeId() {
         String prefix = "SUKTH";
-        String paddedCounter = String.format("%04d", employeeCounter++);
+
+        String paddedCounter = String.format("%05d", employeeCounter++);
         return prefix + paddedCounter;
     }
 
@@ -291,12 +280,7 @@ public class Employee implements Serializable {
         RETIRED,
         AWOL
     }
-   public interface ApplicationCanstant {
-	String FILE_LOCATION = "C:\\Program Files\\Java\\server\\Tomcat_9v";
-	String TEMP_FILE_LOCATION = "C:\\Program Files\\Java\\server\\Tomcat_9v\\images";
-	
 
-    
 }
-}
+
 

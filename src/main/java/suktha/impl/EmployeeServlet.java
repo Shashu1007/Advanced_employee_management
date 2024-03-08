@@ -14,14 +14,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -86,7 +85,7 @@ public class EmployeeServlet extends HttpServlet {
                 
                 
                 default:
-                   response.sendRedirect("login.jsp");
+                    response.sendRedirect("login.jsp");
                     break;
             }
         } catch (SQLException ex) {
@@ -107,18 +106,74 @@ public class EmployeeServlet extends HttpServlet {
             throws SQLException, IOException, ServletException {
 
         int page = 1;
-        int recordsPerPage = 5;
+        int recordsPerPage = 5; // Default value
 
+        // Check if the recordsPerPage parameter is provided and not empty in the request
+        String recordsPerPageParam = request.getParameter("recordsPerPage");
+        if (recordsPerPageParam != null && !recordsPerPageParam.isEmpty()) {
+            try {
+                // Parse the parameter to get the value from the request
+                recordsPerPage = Integer.parseInt(recordsPerPageParam);
+            } catch (NumberFormatException e) {
+                // Handle the case where the parameter cannot be parsed as an integer
+                response.getWriter().write("Records per page selected not valid");
+                return; // Exit the method as we cannot proceed with an invalid parameter
+            }
+        }
+
+        // For other values of records per page, proceed with pagination
         if (request.getParameter("page") != null) {
             page = Integer.parseInt(request.getParameter("page"));
         }
 
         int start = (page - 1) * recordsPerPage;
 
-        List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-        long totalCount = EmployeeDao.getEmployeeCounts(); // Use long instead of int
-        int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+        List<Employee> listEmployees;
+        long totalCount;
+        int totalPages;
 
+        switch (recordsPerPage) {
+            case 10:
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = EmployeeDao.getEmployeeCounts();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+            case -1:
+                // Get all employees if "All" option is selected
+                recordsPerPage = (int) EmployeeDao.getEmployeeCounts();
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = listEmployees.size();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+
+            case 25:
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = EmployeeDao.getEmployeeCounts();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+
+            case 50:
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = EmployeeDao.getEmployeeCounts();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+
+            case 100:
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = EmployeeDao.getEmployeeCounts();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+
+
+            default:
+                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+                totalCount = EmployeeDao.getEmployeeCounts();
+                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+                break;
+        }
+
+
+        // Set attributes for JSP rendering
         request.setAttribute("listEmployees", listEmployees);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("currentPage", page);
@@ -127,6 +182,7 @@ public class EmployeeServlet extends HttpServlet {
         RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
         dispatcher.forward(request, response);
     }
+
 
     private void searchEmployee(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, ParseException {
@@ -160,28 +216,26 @@ public class EmployeeServlet extends HttpServlet {
             throws SQLException, IOException, ParseException, ServletException {
 
 
+        Part file = request.getPart("pic");
+
+        String imageFileName = file.getSubmittedFileName();  // get selected image file name
+        System.out.println("Selected Image File Name : " + imageFileName);
+
+        String uploadPath = "C:\\Program Files\\Apache Software Foundation\\Tomcat 8.5\\webapps\\images\\" + imageFileName;  // upload path where we have to upload our actual image
+        System.out.println("Upload Path : " + uploadPath);
+
+        // Uploading our selected image into the images folder
+
         try {
 
-            Part part = request.getPart("pic");
+            FileOutputStream fos = new FileOutputStream(uploadPath);
+            InputStream is = file.getInputStream();
 
-            InputStream inputStream = part.getInputStream();
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            byte[] fileData = outputStream.toByteArray();
-
-            String base64ImageData = Base64.getEncoder().encodeToString(fileData);
-
-            // Set base64-encoded image data as request attribute
-
-
-            String fileName = extractFileName(part);
+            byte[] data = new byte[is.available()];
+            is.read(data);
+            fos.write(data);
+            fos.close();
+		
          
         String employeeId = Employee.generateEmployeeId();
         String firstName = request.getParameter("firstName");
@@ -203,13 +257,11 @@ public class EmployeeServlet extends HttpServlet {
         Date createdBy = new Date();
 
 
-            Employee employee = new Employee(fileName, fileData, employeeId, firstName, lastName, email, dob, location, phoneNo, gender,
+            Employee employee = new Employee(imageFileName, employeeId, firstName, lastName, email, dob, location, phoneNo, gender,
                 manager, project, job, salary, empStatus, createdBy);
         EmployeeDao.addEmployee(employee);
         System.out.println("successfully inserted");
-            request.setAttribute("base64ImageData", base64ImageData);
-        }
-        catch (IOException | ServletException e){
+        } catch (IOException e) {
             
             e.printStackTrace();
             
@@ -219,18 +271,8 @@ public class EmployeeServlet extends HttpServlet {
         response.sendRedirect("list");
     }
 
-    private String extractFileName(Part part) {
-        String contentDisp = part.getHeader("content-disposition");
-        String[] items = contentDisp.split(";");
 
-        for (String s : items) {
-            if (s.trim().startsWith("filename")) {
-                return s.substring(s.indexOf("=") + 2, s.length() - 1);
-            }
-        }
 
-        return "";
-    }
 
     private void updateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         // Fetch employee ID from the request parameter
@@ -249,24 +291,28 @@ public class EmployeeServlet extends HttpServlet {
                 if (existingEmployee != null) {
                     // Update employee data with the new values from the request parameters
 
-                    Part part = request.getPart("pic");
+                    Part file = request.getPart("pic");
 
-                    InputStream inputStream = part.getInputStream();
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    String imageFileName = file.getSubmittedFileName();  // get selected image file name
+                    System.out.println("Selected Image File Name : " + imageFileName);
 
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
+                    String uploadPath = "C:\\Program Files\\Apache Software Foundation\\Tomcat 8.5\\webapps\\images\\" + imageFileName;  // upload path where we have to upload our actual image
+                    System.out.println("Upload Path : " + uploadPath);
 
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
-                    }
+                    // Uploading our selected image into the images folder
 
-                    byte[] fileData = outputStream.toByteArray();
 
-                    String fileName = extractFileName(part);
+                    FileOutputStream fos = new FileOutputStream(uploadPath);
+                    InputStream is = file.getInputStream();
 
-                    existingEmployee.setImageName(fileName);
-                    existingEmployee.setImageData(fileData);
+                    byte[] data = new byte[is.available()];
+                    is.read(data);
+                    fos.write(data);
+                    fos.close();
+
+
+                    existingEmployee.setImageName(imageFileName);
+                   
                     existingEmployee.setFirstName(request.getParameter("firstName"));
                     existingEmployee.setLastName(request.getParameter("lastName"));
                     existingEmployee.setEmail(request.getParameter("email"));
@@ -352,7 +398,6 @@ public class EmployeeServlet extends HttpServlet {
     }
 
 
-    @SuppressWarnings("null")
     private void deleteEmployee(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
@@ -437,6 +482,7 @@ public class EmployeeServlet extends HttpServlet {
     private void filterEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SQLException, ParseException {
 
         String[] jobFilters = request.getParameterValues("jobFilters");
+
 
         List<Employee> filteredEmployees = EmployeeDao.getFilteredEmployees(jobFilters);
 
