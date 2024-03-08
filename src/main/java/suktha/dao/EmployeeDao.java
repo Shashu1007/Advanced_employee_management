@@ -25,8 +25,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -35,9 +33,10 @@ import java.util.List;
  * @author Shashank
  */
 
-    
+
 public class EmployeeDao {
     
+
 
 public static List<Employee> getEmployees(int start, int recordsPerPage) {
     Transaction transaction = null;
@@ -51,7 +50,6 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
         query.setFirstResult(start);
         query.setMaxResults(recordsPerPage);
         employees = query.getResultList();
-        
         transaction.commit();
     } catch (HibernateException e) {
         if (transaction != null) {
@@ -66,17 +64,107 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
     return employees;
 }
 
+    public static List<Employee> getAllEmployees() {
+        Transaction transaction = null;
+        List<Employee> employees = null;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            transaction = session.beginTransaction();
+
+            Query<Employee> query = session.createQuery("FROM Employee WHERE empStatus != :status", Employee.class);
+            query.setParameter("status", EmployeeStatus.DELETED); // Set the parameter value for the status
+            employees = query.getResultList(); // Fetch all employees without pagination
+            transaction.commit();
+        } catch (HibernateException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+        return employees;
+    }
+
+    public static List<Employee> getFilteredEmployees(String[] jobFilters) throws SQLException, ParseException {
+        List<Employee> employees = new ArrayList<>();
+
+        // Obtain a connection from your connection factory or DriverManager
+        try (Connection connection = ConnectionFactory.getConnection()) {
+            StringBuilder queryStringBuilder = new StringBuilder("SELECT * FROM Employee WHERE 1=1");
+
+            // Check if jobFilters exist and append to the query
+            if (jobFilters != null && jobFilters.length > 0) {
+                queryStringBuilder.append(" AND job IN (");
+                for (int i = 0; i < jobFilters.length; i++) {
+                    queryStringBuilder.append("?");
+                    if (i < jobFilters.length - 1) {
+                        queryStringBuilder.append(",");
+                    }
+                }
+                queryStringBuilder.append(")");
+            }
+
+            // Exclude records where empStatus is 'DELETED'
+            queryStringBuilder.append(" AND empStatus != 'DELETED'");
+
+            // Create the PreparedStatement
+            try (PreparedStatement preparedStatement = connection.prepareStatement(queryStringBuilder.toString())) {
+                // Set parameters if jobFilters exist
+                if (jobFilters != null && jobFilters.length > 0) {
+                    for (int i = 0; i < jobFilters.length; i++) {
+                        preparedStatement.setString(i + 1, jobFilters[i]);
+                    }
+                }
+
+                // Execute the query
+                try (ResultSet rs = preparedStatement.executeQuery()) {
+                    // Process the result set
+                    while (rs.next()) {
+                        Employee employee = new Employee();
+                        // Populate employee fields from the result set
+                        employee.setId(rs.getInt("id"));
+                        employee.setEmployeeId(rs.getString("employeeId"));
+                        employee.setFirstName(rs.getString("first_name"));
+                        employee.setLastName(rs.getString("last_name"));
+                        employee.setEmail(rs.getString("e_mail"));
+                        String dobString = rs.getString("dob");
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        Date dob = dateFormat.parse(dobString);
+                        employee.setDob(dob);
+                        employee.setLocation(rs.getString("location"));
+                        employee.setPhoneNo(rs.getString("Phone_no"));
+                        employee.setGender(rs.getString("gender"));
+                        employee.setManager(rs.getString("manager"));
+                        employee.setProject(rs.getString("project"));
+                        employee.setJob(rs.getString("job"));
+                        employee.setSalary(rs.getString("salary"));
+                        String empStatusString = rs.getString("empStatus");
+                        EmployeeStatus empStatus = EmployeeStatus.valueOf(empStatusString);
+                        employee.setEmpStatus(empStatus);
+
+                        employees.add(employee);
+                    }
+                }
+            }
+        }
+
+        return employees;
+    }
 
   public static List<Employee> searchEmployees(String searchKeyword) throws SQLException, ParseException {
     List<Employee> employees = new ArrayList<>();
    
     String sql = "SELECT * FROM Employee " +
-            "WHERE employeeId LIKE ? OR " +
+            "WHERE (employeeId LIKE ? OR " +
                  "first_name LIKE ? OR " +
                  "last_name LIKE ? OR " +
                  "e_mail LIKE ? OR " +
-                 "Phone_no LIKE ? AND " + 
-                "empStatus NOT LIKE 'DELETED'";
+            "Phone_no LIKE ? OR " +
+            "location LIKE ?) " + // Closing parentheses for the OR conditions
+            "AND empStatus != 'DELETED'"; // Filter for empStatus
     
     try (Connection conn = ConnectionFactory.getConnection();
          PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -87,12 +175,15 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
         stmt.setString(3, keyword); // last_name
         stmt.setString(4, keyword); // email
         stmt.setString(5, keyword); // phone_no
+        stmt.setString(6, keyword); // location
         
         try (ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 Employee employee = new Employee();
 
-                
+                String idParam = rs.getString("id");
+                int id = Integer.parseInt(idParam);
+                employee.setId(id);
                 employee.setEmployeeId(rs.getString("employeeId"));
                 employee.setFirstName(rs.getString("first_name"));
                 employee.setLastName(rs.getString("last_name"));
@@ -123,8 +214,7 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
 }
 
 
-
-     public static void addEmployee(Employee employee) {
+    public static void addEmployee(Employee employee) {
         Transaction transaction = null;
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -164,6 +254,30 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
         }
     return employee;
 }
+
+
+    public static List<Employee> getEmployeesByIds(List<String> ids) {
+        Transaction transaction = null;
+        List<Employee> employees = null;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            transaction = session.beginTransaction();
+            employees = session.createQuery("from Employee e where e.employeeId IN (:ids)")
+                    .setParameterList("ids", ids)
+                    .list();
+            transaction.commit();
+        } catch (HibernateException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+        return employees;
+    }
 
 
   public static void updateEmployee(Employee employee) {
@@ -210,6 +324,8 @@ public static List<Employee> getEmployees() {
     int recordsPerPage = 5; // Default records per page
     return getEmployees(start, recordsPerPage);
 }
+
+
     @SuppressWarnings({"unchecked", "CallToPrintStackTrace"})
     private void listEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     int page = 1;
@@ -264,7 +380,6 @@ public static List<Employee> getEmployees() {
     }
 }
 
-    
      public static String deleteEmployees(List<Integer> ids) {
         Transaction transaction = null;
         String message = "";
@@ -312,7 +427,6 @@ public static List<Employee> getEmployees() {
     }
 }
      
-     
    public static long getEmployeeCount() {
        Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -327,23 +441,8 @@ public static List<Employee> getEmployees() {
         }
     }
 
-   
-   
 
-   
-//private static String preparePlaceholders(int length) {
-//    StringBuilder sb = new StringBuilder();
-//    for (int i = 0; i < length; i++) {
-//        if (i > 0) {
-//            sb.append(",");
-//        }
-//        sb.append("?");
-//    }
-//    return sb.toString();
-//}
-
-
-public static long getEmployeeCounts() {
+    public static long getEmployeeCounts() {
     Transaction transaction = null;
     long count = 0;
     try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -362,74 +461,6 @@ public static long getEmployeeCounts() {
     return count;
 }
 
-public static List<Employee> fetchRecords (String[] locations, String[] genders, String[] managers, String[] projects, String[] jobs) throws SQLException, ParseException {
-    List<Employee> employees = new ArrayList<>();
-   
-    StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM Employee WHERE empStatus != 'DELETED'");
-    List<String> conditions = new ArrayList<>();
-    List<String> parameters = new ArrayList<>();
-
-    if (locations != null && locations.length > 0) {
-        conditions.add("location IN (" + String.join(",", Collections.nCopies(locations.length, "?")) + ")");
-        parameters.addAll(Arrays.asList(locations));
-    }
-    if (genders != null && genders.length > 0) {
-        conditions.add("gender IN (" + String.join(",", Collections.nCopies(genders.length, "?")) + ")");
-        parameters.addAll(Arrays.asList(genders));
-    }
-    if (managers != null && managers.length > 0) {
-        conditions.add("manager IN (" + String.join(",", Collections.nCopies(managers.length, "?")) + ")");
-        parameters.addAll(Arrays.asList(managers));
-    }
-    if (projects != null && projects.length > 0) {
-        conditions.add("project IN (" + String.join(",", Collections.nCopies(projects.length, "?")) + ")");
-        parameters.addAll(Arrays.asList(projects));
-    }
-    if (jobs != null && jobs.length > 0) {
-        conditions.add("job IN (" + String.join(",", Collections.nCopies(jobs.length, "?")) + ")");
-        parameters.addAll(Arrays.asList(jobs));
-    }
-
-    if (!conditions.isEmpty()) {
-        sqlBuilder.append(" AND ").append(String.join(" AND ", conditions));
-    }
-
-    String sql = sqlBuilder.toString();
-
-    try (Connection conn = ConnectionFactory.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-        int parameterIndex = 1;
-        for (String parameter : parameters) {
-            stmt.setString(parameterIndex++, parameter);
-        }
-
-        try (ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                // Populate employee object and add to list
-            }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-
-    return employees;
-}
-
-
-
-
- public static List<String> getAllLocations() {
-    List<String> locations = new ArrayList<>();
-    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Query<String> query = session.createQuery("SELECT DISTINCT location FROM Employee WHERE empStatus NOT LIKE 'DELETED'", String.class);
-        locations = query.getResultList();
-    } catch (HibernateException ex) {
-       
-        ex.printStackTrace();
-    }
-    return locations;
-}
 
 
     public static List<String> getAllGenders() {

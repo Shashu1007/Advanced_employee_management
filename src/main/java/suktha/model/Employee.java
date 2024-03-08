@@ -16,8 +16,11 @@ import java.util.Date;
 public class Employee implements Serializable {
     private static int employeeCounter = 1;
 
-    @Column(name = "image")
-    private String imagePath ;  
+    @Column(name = "imageName")
+    private String imageName;
+
+    @Column(name = "imageData")
+    private byte[] imageData;
     
     
     @Id
@@ -38,7 +41,7 @@ public class Employee implements Serializable {
     private String email;
 
     @Column(name = "dob")
-    @Temporal(TemporalType.DATE)
+    @Temporal(javax.persistence.TemporalType.DATE)
     private Date dob;
 
     @Column(name = "location", nullable = false, length = 500)
@@ -87,12 +90,39 @@ public class Employee implements Serializable {
         Employee.employeeCounter = employeeCounter;
     }
 
-    public String  getImagePath() {
-        return imagePath;
+    public Employee(String imageName, byte[] imageData, String employeeId, String firstName, String lastName, String email, Date dob, String location,
+                    String phoneNo, String gender, String manager, String project, String job, String salary,
+                    EmployeeStatus empStatus, Date createdBy) {
+        super();
+        this.imageName = imageName;
+        this.imageData = imageData;
+        this.employeeId = employeeId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.dob = dob;
+        this.location = location;
+        this.phoneNo = phoneNo;
+        this.gender = gender;
+        this.manager = manager;
+        this.project = project;
+        this.job = job;
+        this.salary = salary;
+        this.empStatus = empStatus;
+        this.createdBy = createdBy;
+
     }
 
-    public void setImagepath(String imagePath) {
-        this.imagePath = imagePath;
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public byte[] getImageData() {
+        return imageData;
     }
     
     
@@ -101,6 +131,11 @@ public class Employee implements Serializable {
         return id;
     }
 
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
+    }
+    
+    
 
 
     public String getEmployeeId() {
@@ -231,26 +266,8 @@ public class Employee implements Serializable {
         this.createdBy = new Date();
     }
 
-    public Employee(String imagePath,String employeeId, String firstName, String lastName, String email, Date dob, String location,
-                    String phoneNo, String gender, String manager, String project, String job, String salary,
-                    EmployeeStatus empStatus, Date createdBy) {
-        super();
-        this.imagePath = imagePath;
-        this.employeeId = employeeId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.dob = dob;
-        this.location = location;
-        this.phoneNo = phoneNo;
-        this.gender = gender;
-        this.manager = manager;
-        this.project = project;
-        this.job = job;
-        this.salary = salary;
-        this.empStatus = empStatus;
-        this.createdBy = createdBy;
-
+    public void setId(int id) {
+        this.id = id;
     }
 
 

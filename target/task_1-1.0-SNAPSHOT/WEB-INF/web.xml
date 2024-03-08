@@ -8,4 +8,12 @@
             30
         </session-timeout>
     </session-config>
+     <servlet>
+    <servlet-name>ExcelExportServlet</servlet-name>
+    <servlet-class>suktha.export.ExcelExportServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>ExcelExportServlet</servlet-name>
+    <url-pattern>/excelExport</url-pattern>
+</servlet-mapping>
 </web-app>

@@ -8,6 +8,8 @@ import javax.ws.rs.core.Response;
  *
  * @author 
  */
+
+
 @Path("rest")
 public class JakartaEE8Resource {
     
@@ -17,4 +19,5 @@ public class JakartaEE8Resource {
                 .ok("ping")
                 .build();
     }
+
 }

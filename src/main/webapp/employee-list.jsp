@@ -361,10 +361,11 @@ table.table .avatar {
 .selects{
     margin-right: 60px;
 }
-.filters select {
+
+     #job-filter {
     display: none;
-    
-}
+     }
+
 
 .avatar {
     border-radius: 50%;
@@ -383,15 +384,29 @@ table.table .avatar {
          border-radius: 50%;
 }
 
+     #preview2 {
+         width: 100px;
+         height: 100px;
+         border-radius: 50%;
+     }
+
 </style>
 <script>
-       function previewImage(event) {
+    function previewImage(event) {
   var input = event.target;
   var image = document.getElementById('preview');
   if (input.files && input.files[0]) {
     image.src = URL.createObjectURL(input.files[0]);
   }
 }
+
+    function previewImage2(event) {
+        var input = event.target;
+        var image = document.getElementById('preview2');
+        if (input.files && input.files[0]) {
+            image.src = URL.createObjectURL(input.files[0]);
+        }
+    }
 
     $(document).ready(function () {
 
@@ -437,11 +452,19 @@ table.table .avatar {
         });
     });
 
-    //$(document).ready(function(){
-    //    $('.pagin')
-    //}
+    //    //$(document).ready(function(){
+    //    //    $('.pagin')
+    //    //}
+    //
 
+    // JavaScript function to handle updating employee details
+    function handleUpdateEmployee(employeeId) {
+        // Fetch existing employee details and fill the update modal
+        fillOldEmployeeDetails(employeeId);
 
+        // Open the update modal
+        $('#updateEmployeeModal').modal('show');
+    }
 
     // sorting function😒
     function sortTable(n) {
@@ -533,9 +556,11 @@ table.table .avatar {
             select.toggle();
         });
     });
-        // JavaScript function to handle updating employee data
+
+
     // JavaScript function to handle updating employee data
-        function handleUpdateEmployee(employeeId) {
+    // JavaScript function to handle updating employee data
+    function fillOldEmployeeDetails(employeeId) {
             // Set the employee ID in the hidden input field of the update modal
             document.getElementById('updateEmployeeId').value = employeeId;
 
@@ -555,7 +580,7 @@ table.table .avatar {
                 })
                 .then(data => {
                     // Populate form fields in the update modal with the retrieved employee details
-                    document.getElementById('pic').value = data.filePath;
+//                    document.getElementById('pic').value = data.filePath;
                     document.getElementById('firstName').value = data.firstName;
                     document.getElementById('lastName').value = data.lastName;
                     document.getElementById('email').value = data.email;
@@ -619,100 +644,204 @@ $("#pic").change(function() {
 });
 
 
-// Function to handle AJAX request
-    function fetchFilteredRecords() {
-        var locationValues = getSelectedValues('location-filter');
-        var genderValues = getSelectedValues('gender-filter');
-        var managerValues = getSelectedValues('manager-filter');
-        var projectValues = getSelectedValues('project-filter');
-        var jobValues = getSelectedValues('job-filter');
-        
-        // AJAX request to fetch records based on selected values
-        // You need to replace '/fetchRecords' with your actual endpoint URL
-        $.ajax({
-            url: '/fetchRecords',
-            type: 'GET',
-            data: {
-                locations: locationValues,
-                genders: genderValues,
-                managers: managerValues,
-                projects: projectValues,
-                jobs: jobValues
-            },
-            success: function(response) {
-                // Handle the response data here (e.g., update the UI with fetched records)
-                console.log(response);
-            },
-            error: function(xhr, status, error) {
-                // Handle errors here
-                console.error(error);
+    document.addEventListener('DOMContentLoaded', function () {
+        var jobFilter = document.getElementById('job-filter');
+
+        // Check if the jobFilter element exists
+        if (jobFilter) {
+            // Add change event listener to jobFilter
+            jobFilter.addEventListener('change', sendFilterValues);
+        }
+
+        // Ajax Function to send filter values to the servlet
+        function sendFilterValues() {
+            var selectedValues = getSelectedValues(jobFilter);
+
+            if (selectedValues.length > 0) {
+                var xhr = new XMLHttpRequest();
+                var url = 'filter?jobFilters=' + encodeURIComponent(selectedValues.join(','));
+
+                xhr.open('GET', url, true);
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            // Handle successful response from servlet
+                            var responseData = JSON.parse(xhr.responseText);
+
+
+                            // Populate table with received data
+                            populateTable(responseData);
+                        } else {
+                            // Handle error response from servlet
+                            console.error('Error fetching data:', xhr.statusText);
+                        }
+                    }
+                };
+                xhr.send();
             }
-        });
     }
-    
-    // Function to get selected values from a multi-select element
-    function getSelectedValues(selectId) {
+
+        // Function to get selected values from a select element
+        function getSelectedValues(selectElement) {
         var selectedValues = [];
-        $('#' + selectId + ' option:selected').each(function() {
-            selectedValues.push($(this).val());
-        });
-        console.log(selectedValues);
+            if (selectElement) {
+                for (var i = 0; i < selectElement.options.length; i++) {
+                    if (selectElement.options[i].selected) {
+                        selectedValues.push(selectElement.options[i].value);
+                    }
+                }
+            }
         return selectedValues;
     }
-    
-    // Event listener for select boxes
-    $('.toggle-button').click(function() {
-        $(this).siblings('select').toggle();
-    });
-    
-    // Event listener for option selection
-    $('select[multiple]').change(function() {
-        fetchFilteredRecords();
-    });
-//
-    $(document).ready(function() {
-        // Event listener for filter select boxes
-        $('.filter-select').change(function() {
-            // Get selected filter values
-            var selectedFilters = {};
-            $('.filter-select').each(function() {
-                var filterId = $(this).attr('id');
-                var selectedOptions = $(this).val();
-                selectedFilters[filterId] = selectedOptions;
-            });
 
-            // Send AJAX request to fetch filtered records
-            $.ajax({
-                url: 'FetchRecordsServlet',
-                type: 'POST',
-                data: selectedFilters,
-                success: function(response) {
-                    // Update table with filtered records
-                    $('#employee-table tbody').html(response);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching filtered records:', error);
-                }
-            });
+        // Function to populate the table with data
+        function populateTable(data) {
+            // Get a reference to the table body
+            var tableBody = document.querySelector('table tbody');
+
+            // Clear existing table rows
+            tableBody.innerHTML = '';
+
+            // Iterate over the received data and create table rows dynamically
+            data.forEach(function (employee) {
+
+                var row = document.createElement('tr');
+                var dob = new Date(employee.dob);
+                var formattedDob = dob.toISOString().split('T')[0];
+                console.log(employee.id);
+
+                row.innerHTML = `
+            <td>
+                <span class="custom-checkbox">
+                    <input type="checkbox" id="checkbox1" name="options[]" value=" ` + employee.id + `">
+                    <label for="checkbox1"></label>
+                </span>
+            </td>
+            <td><img class="avatar" style="height: 50px; width: 50px;" src="data:image/png;base64,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" alt="img"></td>
+            <td>` + employee.employeeId + `</td>
+            <td>` + employee.firstName + `</td>
+            <td>` + employee.lastName + `</td>
+            <td>` + employee.email + `</td>
+            <td>` + formattedDob + `</td>
+            <td>` + employee.location + `</td>
+            <td>` + employee.phoneNo + `</td>
+            <td>` + employee.gender + `</td>
+            <td>` + employee.manager + `</td>
+            <td>` + employee.project + `</td>
+            <td>` + employee.job + `</td>
+            <td>` + employee.salary + `</td>
+            <td>` + employee.empStatus + `</td>
+            <td>
+                <a href="#update" class="edit" data-toggle="modal" onclick="handleUpdateEmployee(` + employee.id + `)">
+                    <i class="material-icons" data-toggle="tooltip" title="Edit">&#xE254;</i>
+                </a>
+                <a href="#delete2" class="delete" data-toggle="modal" data-id="` + employee.id + `">
+                    <i class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i>
+                </a>
+            </td>
+        `;
+                // Append the row to the table body
+                tableBody.appendChild(row);
+    });
+        }
+
+
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var deleteBtn = document.getElementById('deleteBtn');
+
+        deleteBtn.addEventListener('click', function (event) {
+
+            // Prevent the default action of the link
+            event.preventDefault();
+
+            // Check if any checkboxes are checked
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+
+            if (checkboxes.length === 0) {
+                $('#delete1').modal('hide');
+
+                // No checkboxes are checked, show the modal with the message
+                document.getElementById('deleteMessageText').innerText = "Please select employees to delete first";
+                $('#deleteMessage').modal('show');
+            } else {
+                $('#delete1').modal('show');
+            }
         });
     });
-  
-    
-    
-    
-    
-     $(document).ready(function(){
-        <%-- Check if the deleteMessage is not empty --%>
-        <% if(request.getAttribute("deleteMessage") != null && !((String)request.getAttribute("deleteMessage")).isEmpty()) { %>
-            // Set the delete message text
-            var deleteMessage = "${deleteMessage}";
-            $("#deleteMessageText").text(deleteMessage);
-            
-            // Show the delete message modal
-            $("#deleteMessage").modal("show");
-        <% } %>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var exportBtn = document.getElementById('exportBtn');
+
+        exportBtn.addEventListener('click', function (event) {
+
+            // Prevent the default action of the link
+            event.preventDefault();
+
+            // Check if any checkboxes are checked
+            var rows = document.querySelectorAll('tbody tr');
+
+
+            if (rows.length <= 1) {
+                $('#downloadMessage').modal('hide');
+
+                // No checkboxes are checked, show the modal with the message
+            } else {
+                document.getElementById('downloadMessageText').innerText = "Are you sure to download these records now?";
+                $('#downloadMessage').modal('show');
+            }
+        });
     });
-    
+    //
+    //
+    //function sendEmployeeIds() {
+    //    var ids = [];
+    //    var rows = document.querySelectorAll('table tbody tr');
+    //
+    //    rows.forEach(function(row) {
+    //        var idCell = row.cells[2]; // Assuming the ID is in the third column (index 2)
+    //        var id = idCell.textContent.trim();
+    //        ids.push(id);
+    //    });
+    //
+    //    document.getElementById("ids").value = ids.join(",");
+    //    document.getElementById("myForm").submit();
+    //}
+    //
+
+    //   document.getElementById('searchForm').addEventListener('submit', function(event) {
+    //        var searchKeyword = document.querySelector('input[name="searchKeyword"]').value.trim();
+    //        if (!searchKeyword) {
+    //            event.preventDefault(); // Prevent form submission
+    //            document.getElementById('deleteMessageText').innerText = "Please enter a search keyword.";
+    //            $('#deleteMessage').modal('show');
+    //        }
+    //    });
+
+
+    // Add event listener to the "Yes" button
+    document.getElementById("exportyes").addEventListener("click", function () {
+        // Send HTTP request to servlet when button is clicked
+        fetch('/TableDataExport', {method: 'GET'})
+            .then(response => {
+                if (response.ok) {
+                    // Display success message or perform any other actions
+                    document.getElementById("downloadMessageText").innerText = "Data exported successfully.";
+                } else {
+                    // Display error message or perform any other actions
+                    document.getElementById("downloadMessageText").innerText = "Failed to export data.";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Display error message or perform any other actions
+                document.getElementById("downloadMessageText").innerText = "Error occurred while exporting data.";
+            });
+    });
+
 </script>
 
 
@@ -733,19 +862,22 @@ $("#pic").change(function() {
                             <div class="btn-group">
                                 <a href="#new" class="btn btn-success" data-toggle="modal"><i class="material-icons">&#xE147;</i>
                                     <span>Add</span></a>
-                                <a href="#delete1" class="btn btn-danger" data-toggle="modal"><i class="material-icons">&#xE15C;</i>
-                                    <span>Delete</span></a>
-                                <form class="export" action="export" method="get" enctype="multipart/form-data">
-                                <button type="submit" class="btn btn-success">Export To Excel</button>
-                            </form>
+                                <button class="btn btn-danger" id="deleteBtn" data-toggle="modal"><i
+                                        class="material-icons">&#xE15C;</i>
+                                    <span>Delete</span></button>
+                                <button type="submit" id="exportBtn" class="btn btn-success"><i class="material-icons">&#xE2C4;</i>Export
+                                </button>
+
                             </div>
                         </div>
                         <div class="form-exp">
-                            <form action="search" method="get" class="form-inline">
+                            <form action="search" method="get" class="form-inline" id="searchForm">
                                 <input type="text" name="searchKeyword" data-toggle="tooltip"
-                                       title=" Search by Name,ID,email,phone_no " class="form-control"
+                                       title=" Search by Name,ID,email,phone_no,location" class="form-control"
                                        placeholder="Search by Name,ID,email,phone_no">
-                                <button type="submit" class="btn btn-success">Search</button>
+                                <button type="submit" class="btn btn-success" id="searchButton">
+                                    <i class="material-icons">&#xE8B6;</i>Search
+                                </button>
                             </form>
                         </div>
 
@@ -753,60 +885,22 @@ $("#pic").change(function() {
 				</div>
                             
                             <div class="row">
-                                <div class="col-sm-6">      
+                                <div class="col-sm-6">
+
                                     <table class="filter-table">
                                         <thead>
                                             <tr class="filters">
-                                                <th>
-                                                    <div class="selects">
-                                                    <button class="toggle-button">City&#9660;</button>
-                                                    <select id="location-filter"  name="location-filter"  style="position: relative" multiple>
-                                                        <c:forEach var="location" items="${EmployeeDao.getAllLocations()}">
-                                                            <option>${location}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    </div>                                                </th>
-                                                <th> 
-                                                     <div class="selects">
-                                                    <button class="toggle-button">Gender&#9660;</button>
-                                                    <select id="gender-filter"  style="position: relative" name="gender-filter" multiple>
-                                                        <c:forEach var="gender" items="${EmployeeDao.getAllGenders()}">
-                                                            <option>${gender}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                     </div>
-                                                </th>
-                                                <th>
-                                                    <div class="selects">
-                                                    <button class="toggle-button">Manager&#9660;</button>
-                                                    <select id="manager-filter"   style="position: relative"  name="manager-filter"  multiple>
-                                                        <c:forEach var="manager" items="${EmployeeDao.getAllManagers()}">
-                                                            <option>${manager}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    </div>
-                                                </th>
-                                            
-                                      
 
-                                                <th><div class="selects">
-                                                    <button class="toggle-button">Project&#9660;</button>
-                                                    <select id="project-filter"  name="location-filter"  multiple>
-                                                        <c:forEach var="project" items="${EmployeeDao.getAllProjects()}">
-                                                            <option>${project}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    </div>
-                                                </th>
-                                                <th>
-                                                    <div class="selects">
+
+                                                <div class="selects">
                                                         <button class="toggle-button">Job&#9660;</button>
-                                                    <select id="job-filter"  name="gender-filter" multiple>
+                                                    <select id="job-filter" name="job-filter" multiple>
                                                         <c:forEach var="job" items="${EmployeeDao.getAllJobs()}">
-                                                            <option>${job}</option>
+                                                            <option value="${job}">${job}</option>
                                                         </c:forEach>
                                                     </select>
-                                                    </div>
+
+                                                </div>
                                                 </th>
                                             </tr>
                                         </thead>
@@ -814,9 +908,8 @@ $("#pic").change(function() {
                                 </div>
                             </div>
                         </div>
-                    
 
-                    <table class="table table-striped table-responsive table-hover " >
+            <table id="mytable" class="table table-striped table-responsive table-hover ">
                         <thead>
                             <tr>
                                <th>
@@ -824,7 +917,6 @@ $("#pic").change(function() {
         <input type="checkbox" class="select-checkbox" id="selectAll">
         <label for="selectAll"></label>
     </span>
-</th>
                                 <th>Pic</th>
                                 <th data-sortable="true" >#ID</th>
                                 <th data-sortable="true" >First Name</th>
@@ -852,7 +944,9 @@ $("#pic").change(function() {
                                             <label for="checkbox1"></label>
                                         </span>
                                     </td>
-                                    <td><img src="${pageContext.request.contextPath}/images/${fileName}" alt="img"></td>
+                                    <td><img class="avatar" style="height: 50px; width: 50px;"
+                                             src="data:image/jpeg;base64,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ZfGNX3h2XfMdfdVo4MpdWcv9NQx+StRmxe0zXwz7cXP2mtb+Z9JV83EVNbISykjyT34IGfftOK7eHbFJNV/SanOrOWtP1s/ePh5DuV9QWSnoHZZGAfvHtO+Z6KxXO/IrETGOO/eZ7u2Lh2taLZpj07RHaHKiXG3RXOAMlZqaHBwGSMOHQ5CloqjSV0dkpo7e+AQt5bzlzSM6jt2iTuTsN/IeCQ2SmhoXwiJvLeSXtPa1Hbck7k7DfyCsUQVsNkpoKR0QiAY5wc4EklzhjBLicnGB8gu+W3QzGXVG081oZJncOaM4BHufmpaIKyrsNLWCPXFnlt0MwXN0t27OxG2w+S4rLDS1rWCSIO0N0NyXZ0fcJz2m+RyrREFbW2Klr5Q6SFriAG+GWg5DSBs5o8DkKTXUMVwpyyVgc3IOD4joQeoI8QpKIK9tlpm24wcppiOSWHcE5zqJO5Od89VxT2WmpqOSJsQDJARINyXgjSdTjudttyrFEFZTWKlpqaSNsQ0SDD2kue1w32w4nxXbbbXBa2OEUYbqOXHJLiQMDLjuVORBDNshNA6DQOW/XqZ3HmEuf8ySfdddys9PdC3mxhxbnSd2uAPUagQcHwVgiCILfC1kQEbQIjmIAYDDpLNgP2SR7rqfZqZ9PIwxN0yP5jxjYv27fk7YbjvCsEQRaC3xW6DREwNbkk9SST1cSdyfMrhS0QEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERB//9k="
+                                             alt="img"></td>
                                     <td>${employee.employeeId}</td>
                                     <td>${employee.firstName}</td>
                                     <td>${employee.lastName}</td>
@@ -882,7 +976,7 @@ $("#pic").change(function() {
                     
      <div class="clearfix">
     <div class="hint-text">
-        Showing <b>${listEmployees.size()+(currentPage -1)*5}</b> out of <b>${count}</b> entries
+        Showing <b>${listEmployees.size()+((currentPage -1)*5)}</b> out of <b>${count}</b> entries
     </div>
     <ul class="pagination">
         <c:if test="${currentPage > 1}">
@@ -914,14 +1008,13 @@ $("#pic").change(function() {
                     <div class="row">
                         <div class="col-md-6">
                         <!--Left column -->
-                            
-                            
-                           
-  <div class="form-group">
-  <label>Employee Pic*</label>
-  <input type="file" id="pic" name="pic"  onchange="previewImage(event)" class="form-control" required>
-  <img id="preview" alt="Preview Image"  >
-</div>  
+
+                            <div class="form-group">
+                                <label>Employee Pic*</label>
+                                <input type="file" id="pic" name="pic" onchange="previewImage(event)"
+                                       class="form-control">
+                                <img id="preview" alt="Preview Image">
+                            </div>
                             <div class="form-group">
                                 <label>First Name *</label>
                                 <input type="text" name="firstName" class="form-control"  required>
@@ -996,7 +1089,8 @@ $("#pic").change(function() {
         </div>
     </div>
 </div>
-    <div id="update" class="modal fade" > 
+
+    <div id="update" class="modal fade">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form id="updateEmployeeForm" action="update" method="post" enctype="multipart/form-data">
@@ -1007,19 +1101,20 @@ $("#pic").change(function() {
                     <div class="modal-body">
                         <input type="hidden" id="updateEmployeeId" name="id" >
 
-
                         <div class="row">
                             <div class="col-md-6">
                               <div class="form-group">
                                 <label>Employee Pic *</label>
-                                 <input type="file" id="pic" name="pic"  onchange="previewImage(event)" class="form-control" required>
-                                <img id="preview" alt="Preview Image"  >
+                                  <input type="file" id="pic" name="pic" onchange="previewImage2(event)"
+                                         class="form-control">
+                                  <img id="preview2"
+                                       src="data:image/jpeg;base64,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ZfGNX3h2XfMdfdVo4MpdWcv9NQx+StRmxe0zXwz7cXP2mtb+Z9JV83EVNbISykjyT34IGfftOK7eHbFJNV/SanOrOWtP1s/ePh5DuV9QWSnoHZZGAfvHtO+Z6KxXO/IrETGOO/eZ7u2Lh2taLZpj07RHaHKiXG3RXOAMlZqaHBwGSMOHQ5CloqjSV0dkpo7e+AQt5bzlzSM6jt2iTuTsN/IeCQ2SmhoXwiJvLeSXtPa1Hbck7k7DfyCsUQVsNkpoKR0QiAY5wc4EklzhjBLicnGB8gu+W3QzGXVG081oZJncOaM4BHufmpaIKyrsNLWCPXFnlt0MwXN0t27OxG2w+S4rLDS1rWCSIO0N0NyXZ0fcJz2m+RyrREFbW2Klr5Q6SFriAG+GWg5DSBs5o8DkKTXUMVwpyyVgc3IOD4joQeoI8QpKIK9tlpm24wcppiOSWHcE5zqJO5Od89VxT2WmpqOSJsQDJARINyXgjSdTjudttyrFEFZTWKlpqaSNsQ0SDD2kue1w32w4nxXbbbXBa2OEUYbqOXHJLiQMDLjuVORBDNshNA6DQOW/XqZ3HmEuf8ySfdddys9PdC3mxhxbnSd2uAPUagQcHwVgiCILfC1kQEbQIjmIAYDDpLNgP2SR7rqfZqZ9PIwxN0yP5jxjYv27fk7YbjvCsEQRaC3xW6DREwNbkk9SST1cSdyfMrhS0QEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERB//9k="
+                                       alt="Preview Image">
                               </div>
                                 <div class="form-group">
                         <label>First Name</label>
                         <input type="text" name="firstName" id="firstName" class="form-control"  required><br>
                                 </div>
-
                     <div class="form-group">
                         <label>Last Name</label>
                         <input type="text" name="lastName" id="lastName" class="form-control"><br>
@@ -1082,7 +1177,7 @@ $("#pic").change(function() {
                         </div>
                     </div>
                         <div class="modal-footer">
-                            <button type="reset" class="btn btn-danger" data-dismiss="modal">Clear</button>
+                            <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-success">Update</button>
                         </div>
             </form>
@@ -1101,7 +1196,6 @@ $("#pic").change(function() {
                 </div>
                 <div class="modal-body">					
                     <p>Are you sure you want to delete the selected records?</p>
-                    <p class="text-warning"><small>This action cannot be undone.</small></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -1123,7 +1217,6 @@ $("#pic").change(function() {
                 </div>
                 <div class="modal-body">					
                     <p>Are you sure you want to delete this record?</p>
-                    <p class="text-warning"><small>This action cannot be undone.</small></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -1134,13 +1227,35 @@ $("#pic").change(function() {
     </div>
 </div>
 </div>
-    
-    
-    <div id="deleteMessage" class="modal fade">
+
+<div id="downloadMessage" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">						
-                <h4 class="modal-title">Delete Message</h4>
+            <form class="export" id="myForm" action="export" method="get" enctype="multipart/form-data">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Export Employees</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="downloadMessageText"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">No</button>
+                    <button id="exportyes" type="submit" class="btn btn-success">Yes</button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div id="deleteMessage" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Message</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             </div>
             <div class="modal-body">					
@@ -1152,5 +1267,18 @@ $("#pic").change(function() {
         </div>
     </div>
 </div>
+
+
+<% if (request.getAttribute("emptySearchMessage") != null) { %>
+<script>
+    // Set the text of the deleteMessageText element inside the modal
+    document.getElementById('deleteMessageText').innerText = '<%= request.getAttribute("emptySearchMessage") %>';
+
+    // Display the modal
+    $('#deleteMessage').modal('show');
+</script>
+<% } %>
+
+
 </body>
 </html>

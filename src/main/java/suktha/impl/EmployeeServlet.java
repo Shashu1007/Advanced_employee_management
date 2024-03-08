@@ -1,37 +1,40 @@
 package suktha.impl;
 
 import com.google.gson.Gson;
-import java.awt.Image;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Paths;
 import org.hibernate.HibernateException;
 import suktha.dao.EmployeeDao;
 import suktha.model.Employee;
+import suktha.model.Employee.EmployeeStatus;
 
-
-
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
-import java.text.*;
-import java.util.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.*;
-import suktha.model.Employee.EmployeeStatus;
-@MultipartConfig
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, //2MB
+        maxFileSize = 1024 * 1024 * 10, //10MB
+        maxRequestSize = 1024 * 1024 * 50) //50 MB
 @WebServlet("/")
 
 public class EmployeeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+
 
     @Override
     public void init() {
@@ -73,10 +76,9 @@ public class EmployeeServlet extends HttpServlet {
                 case "/deleteAllEmployee":
                       deleteAllEmployees(request,response);
                       break;
- //               case "/filter":
-//
-//                    filterEmployees(request, response);
-//                    break;
+                case "/filter":
+                    filterEmployees(request, response);
+                    break;
                     
                 case   "/login":
                       login(request,response);
@@ -129,9 +131,21 @@ public class EmployeeServlet extends HttpServlet {
     private void searchEmployee(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, ParseException {
         String searchKeyword = request.getParameter("searchKeyword");
+
         try {
-            List<Employee> searchResult = EmployeeDao.searchEmployees(searchKeyword);
-            request.setAttribute("listEmployees", searchResult);
+            // Check if the search keyword is empty
+            if (searchKeyword == null || searchKeyword.trim().isEmpty()) {
+                // Set an attribute to indicate empty search
+                request.setAttribute("emptySearchMessage", "Please enter a search keyword.");
+            } else {
+                // Perform the search and retrieve the search results
+                List<Employee> searchResult = EmployeeDao.searchEmployees(searchKeyword);
+
+                // Set the search results as a request attribute
+                request.setAttribute("listEmployees", searchResult);
+            }
+
+            // Forward to the employee-list.jsp page
             RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
             dispatcher.forward(request, response);
         } catch (SQLException e) {
@@ -141,30 +155,34 @@ public class EmployeeServlet extends HttpServlet {
         }
     }
 
-   
+
     private void insertEmployee(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException, ParseException, ServletException {
 
 
         try {
-         Part filePart = request.getPart("pic");
-        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-        
-        // Get the temporary directory path from the servlet context
-        String tempDirPath = getServletContext().getAttribute("javax.servlet.context.tempdir").toString();
-        
-        // Construct the file path in the temporary directory
-        String filePath = tempDirPath + File.separator + fileName;
-        
-        // Save the uploaded file to the temporary directory
-        try (InputStream fileContent = filePart.getInputStream(); 
-                OutputStream outputStream = new FileOutputStream(filePath)) {
+
+            Part part = request.getPart("pic");
+
+            InputStream inputStream = part.getInputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
             byte[] buffer = new byte[4096];
             int bytesRead;
-            while ((bytesRead = fileContent.read(buffer)) != -1) {
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
             }
-        }
+
+            byte[] fileData = outputStream.toByteArray();
+
+            String base64ImageData = Base64.getEncoder().encodeToString(fileData);
+
+            // Set base64-encoded image data as request attribute
+
+
+            String fileName = extractFileName(part);
+         
         String employeeId = Employee.generateEmployeeId();
         String firstName = request.getParameter("firstName");
         String lastName = request.getParameter("lastName");
@@ -184,19 +202,34 @@ public class EmployeeServlet extends HttpServlet {
         EmployeeStatus empStatus = EmployeeStatus.ACTIVE;
         Date createdBy = new Date();
 
-        
-        Employee employee = new Employee(filePath,employeeId, firstName, lastName, email, dob, location, phoneNo, gender,
+
+            Employee employee = new Employee(fileName, fileData, employeeId, firstName, lastName, email, dob, location, phoneNo, gender,
                 manager, project, job, salary, empStatus, createdBy);
         EmployeeDao.addEmployee(employee);
         System.out.println("successfully inserted");
+            request.setAttribute("base64ImageData", base64ImageData);
         }
         catch (IOException | ServletException e){
             
             e.printStackTrace();
             
         }
-        
+
+
         response.sendRedirect("list");
+    }
+
+    private String extractFileName(Part part) {
+        String contentDisp = part.getHeader("content-disposition");
+        String[] items = contentDisp.split(";");
+
+        for (String s : items) {
+            if (s.trim().startsWith("filename")) {
+                return s.substring(s.indexOf("=") + 2, s.length() - 1);
+            }
+        }
+
+        return "";
     }
 
     private void updateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -215,22 +248,25 @@ public class EmployeeServlet extends HttpServlet {
                 // Check if the employee with the given ID exists
                 if (existingEmployee != null) {
                     // Update employee data with the new values from the request parameters
-             
-                    Part filePart = request.getPart("pic");
-                    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                    String uploadDirectory = "C:/Users/Shashank/Documents/NetBeansProjects/task_1/src/main/webapp/images/";
-                    File file = new File(uploadDirectory + fileName);
-                    String imagepath = uploadDirectory + fileName;
 
-                    InputStream fileContent = filePart.getInputStream(); 
-                    OutputStream outputStream = new FileOutputStream(file); 
+                    Part part = request.getPart("pic");
+
+                    InputStream inputStream = part.getInputStream();
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
                     byte[] buffer = new byte[4096];
                     int bytesRead;
-                    while ((bytesRead = fileContent.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
-                        }
-                    
-                    existingEmployee.setImagepath(imagepath);
+
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+
+                    byte[] fileData = outputStream.toByteArray();
+
+                    String fileName = extractFileName(part);
+
+                    existingEmployee.setImageName(fileName);
+                    existingEmployee.setImageData(fileData);
                     existingEmployee.setFirstName(request.getParameter("firstName"));
                     existingEmployee.setLastName(request.getParameter("lastName"));
                     existingEmployee.setEmail(request.getParameter("email"));
@@ -316,63 +352,54 @@ public class EmployeeServlet extends HttpServlet {
     }
 
 
+    @SuppressWarnings("null")
     private void deleteEmployee(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        try {
-            String idParam = request.getParameter("id");
-            if (idParam != null && !idParam.isEmpty()) {
-                int id = Integer.parseInt(idParam);
+
+        String idParam = request.getParameter("id");
+
+
+        int id = Integer.parseInt(idParam);
                 EmployeeDao.deleteEmployee(id);
                 response.sendRedirect("list");
-            } else {
-                response.getWriter().println("Employee ID parameter is missing or empty.");
-            }
-        } catch (NumberFormatException e) {
-            response.getWriter().println("Invalid employee ID format.");
-        }
+
     }
+
     private void deleteEmployees(HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
-    try {
+
         String idsParam = request.getParameter("ids");
-        if ( idsParam != null && !idsParam.isEmpty() ) {
-            String[] idsArray = idsParam.split(",");
+
+        String[] idsArray = idsParam.split(",");
             List<Integer> ids = new ArrayList<>();
             for (String id : idsArray) {
-                if(id.equals("on")){
-                continue;
+                if (id.equals("on")) {
+                    continue;
                 }
                 ids.add(Integer.valueOf(id));
             }
-//            EmployeeDao.deleteEmployees(ids);
             String deleteMessage = EmployeeDao.deleteEmployees(ids);
 
             // Set the message as an attribute in the request
             request.setAttribute("deleteMessage", deleteMessage);
 
             // Forward the request to the JSP page
-            RequestDispatcher dispatcher = request.getRequestDispatcher("employee.jsp");
-            dispatcher.forward(request, response);
             response.sendRedirect("list");
-        } else {
-            response.getWriter().println("Employee IDs parameter is missing or empty.");
-        }
-    } catch (NumberFormatException e) {
-        response.getWriter().println("Invalid employee ID format.");
+
     }
-    }
+
  private void deleteAllEmployees(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException, ParseException {
     String idsParam = request.getParameter("ids");
     String statusParam = request.getParameter("status");
 
     List<Integer> ids = new ArrayList<>();
-    if (idsParam != null) {
-        String[] idArray = idsParam.split(",");
+
+     String[] idArray = idsParam.split(",");
         for (String idStr : idArray) {
             ids.add(Integer.valueOf(idStr));
+
         }
-    }
 
     EmployeeStatus status = EmployeeStatus.valueOf(statusParam);
 
@@ -380,7 +407,9 @@ public class EmployeeServlet extends HttpServlet {
 
     RequestDispatcher dispatcher = request.getRequestDispatcher("/employees");
     dispatcher.forward(request, response);
-}private void login(HttpServletRequest request, HttpServletResponse response) 
+ }
+
+    private void login(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         try{
     String username = request.getParameter("username");
@@ -403,4 +432,19 @@ public class EmployeeServlet extends HttpServlet {
             e.printStackTrace();
             }
 }
+
+
+    private void filterEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, SQLException, ParseException {
+
+        String[] jobFilters = request.getParameterValues("jobFilters");
+
+        List<Employee> filteredEmployees = EmployeeDao.getFilteredEmployees(jobFilters);
+
+        // Assuming you have a method to convert the list of employees to JSON format
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(new Gson().toJson(filteredEmployees));
+    }
+
 }
+    
