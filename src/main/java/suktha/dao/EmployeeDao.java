@@ -180,6 +180,7 @@ public static List<Employee> getEmployees(int start, int recordsPerPage) {
                 String idParam = rs.getString("id");
                 int id = Integer.parseInt(idParam);
                 employee.setId(id);
+                employee.setImageName(rs.getString("imageName"));
                 employee.setEmployeeId(rs.getString("employeeId"));
                 employee.setFirstName(rs.getString("first_name"));
                 employee.setLastName(rs.getString("last_name"));
@@ -298,28 +299,6 @@ public static List<Employee> getEmployees() {
 }
 
 
-//    @SuppressWarnings({"unchecked", "CallToPrintStackTrace"})
-//    private void listEmployees(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//    int page = 1;
-//    int recordsPerPage = 5;
-//
-//    if (request.getParameter("page") != null) {
-//        page = Integer.parseInt(request.getParameter("page"));
-//    }
-//
-//    int start = (page - 1) * recordsPerPage;
-//
-//    List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-//    long totalCount = EmployeeDao.getEmployeeCount(); // Assuming you have a method to get total count
-//    int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-//
-//    request.setAttribute("listEmployees", listEmployees);
-//    request.setAttribute("totalPages", totalPages);
-//    request.setAttribute("currentPage", page);
-//
-//    RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
-//    dispatcher.forward(request, response);
-//}
 
 
   public static void deleteEmployee(int id) {
@@ -454,7 +433,7 @@ public static List<Employee> getEmployees() {
     } catch (HibernateException e) {
         if (transaction != null) {
             transaction.rollback();
-        }
+        }   
         e.printStackTrace();
     }
     return count;

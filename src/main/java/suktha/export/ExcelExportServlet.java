@@ -1,7 +1,6 @@
 package suktha.export;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import suktha.dao.EmployeeDao;
 import suktha.model.Employee;
@@ -14,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @WebServlet("/export")
@@ -49,6 +49,10 @@ public class ExcelExportServlet extends HttpServlet {
 
                         String trimmedIdsString = idStr.replaceAll("\"", "");
                         // Trim whitespace and convert the string ID to an integer
+                        if (trimmedIdsString.equals("on")) {
+                            continue;
+
+                        }
                         int id = Integer.parseInt(trimmedIdsString.trim());
                         employeeIds.add(id);
                     } catch (NumberFormatException e) {
@@ -60,15 +64,28 @@ public class ExcelExportServlet extends HttpServlet {
 
                 List<Employee> employees = EmployeeDao.getEmployeesByIds(employeeIds);
 
+
                 try (XSSFWorkbook workbook = new XSSFWorkbook()) {
-                    org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Employees");
+                    String name = String.valueOf(new Date());
+                    org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Employees_" + name);
+
+                    // Create cell styles
+                    CellStyle headerStyle = workbook.createCellStyle();
+                    Font headerFont = workbook.createFont();
+                    headerFont.setBold(true);
+                    headerStyle.setFont(headerFont);
+
+                    CellStyle currencyStyle = workbook.createCellStyle();
+                    DataFormat currencyFormat = workbook.createDataFormat();
+                    currencyStyle.setDataFormat(currencyFormat.getFormat("$#,##0.00"));
 
                     Row headerRow = sheet.createRow(0);
-                    String[] headers = {"Employee Id", "First Name", "Last Name", "E-mail", "Date of Birth", "location",
+                    String[] headers = {"Employee Id", "First Name", "Last Name", "E-mail", "Date of Birth", "Location",
                             "Phone No", "Gender", "Job", "Salary", "Manager", "Project", "Status"};
                     for (int i = 0; i < headers.length; i++) {
                         Cell cell = headerRow.createCell(i);
                         cell.setCellValue(headers[i]);
+                        cell.setCellStyle(headerStyle);
                     }
 
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -85,20 +102,24 @@ public class ExcelExportServlet extends HttpServlet {
                         row.createCell(6).setCellValue(employee.getPhoneNo());
                         row.createCell(7).setCellValue(employee.getGender());
                         row.createCell(8).setCellValue(employee.getJob());
-                        row.createCell(9).setCellValue(employee.getSalary());
+
+                        // Create and format salary cell
+                        Cell salaryCell = row.createCell(9);
+                        salaryCell.setCellValue(employee.getSalary());
+                        salaryCell.setCellStyle(currencyStyle);
+
                         row.createCell(10).setCellValue(employee.getManager());
                         row.createCell(11).setCellValue(employee.getProject());
                         row.createCell(12).setCellValue(employee.getEmpStatus().toString());
                     }
 
                     workbook.write(response.getOutputStream());
-
-
                 } catch (IOException | NullPointerException | IllegalArgumentException e) {
                     // Handle IOException, NullPointerException, or IllegalArgumentException
                     e.printStackTrace(); // Print stack trace for debugging
                     response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error exporting data");
                 }
+
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "No records found");
             }

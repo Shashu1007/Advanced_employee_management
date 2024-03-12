@@ -413,6 +413,77 @@ table.table .avatar {
 </style>
 
 <script>
+//   document.addEventListener('DOMContentLoaded', function () {
+//    // Define variables for pagination
+//    var currentPage = 1;
+//    var recordsPerPage = 5; // Default records per page
+//    var totalRecords = 53; // Total number of records
+//
+//    // Function to display records for the current page
+//    function displayRecords() {
+//        var start = (currentPage - 1) * recordsPerPage;
+//        var end = Math.min(start + recordsPerPage, totalRecords);
+//        
+//        // Loop through table rows and show/hide based on current page
+//        var tableRows = document.querySelectorAll('#mytable tbody tr');
+//        for (var i = 0; i < tableRows.length; i++) {
+//            if (i >= start && i < end) {
+//                tableRows[i].style.display = 'table-row';
+//            } else {
+//                tableRows[i].style.display = 'none';
+//            }
+//        }
+//    }
+//
+//    // Function to update pagination UI
+//    function updatePaginationUI() {
+//        // Calculate total pages
+//        var totalPages = Math.ceil(totalRecords / recordsPerPage);
+//
+//        // Update pagination info
+//        var paginationInfo = document.querySelector('.hint-text');
+//        paginationInfo.innerHTML = `Showing <b>`+Math.min(totalRecords, (currentPage - 1) * recordsPerPage + 1)+`</b> to <b>`+ Math.min(totalRecords, currentPage * recordsPerPage)+`</b> of <b>`totalRecords`</b> entries`;
+//
+//        // Update pagination links
+//        var pagination = document.querySelector('.pagination');
+//        var paginationHTML = '';
+//        for (var i = 1; i <= totalPages; i++) {
+//          paginationHTML += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
+//            paginationHTML += '<a class="page-link" href="#" onclick="changePage(' + i + ')">' + i + '</a>';
+//            paginationHTML += '</li>';
+//
+//        }
+//        pagination.innerHTML = paginationHTML;
+//    }
+//
+//    // Function to change page
+//    window.changePage = function(page) {
+//        currentPage = page;
+//        displayRecords();
+//        updatePaginationUI();
+//    };
+//
+//    // Initial display and pagination UI update
+//    displayRecords();
+//    updatePaginationUI();
+//});
+    
+
+    document.addEventListener('DOMContentLoaded', function () {
+    // Add event listener to the table body to handle delete button clicks
+    document.querySelector('table tbody').addEventListener('click', function (event) {
+        // Check if the clicked element is a delete button
+        if (event.target.classList.contains('delete')) {
+            // Get the ID of the employee associated with the delete button
+            var employeeId = event.target.getAttribute('data-id');
+            // Call the handleDeleteEmployee function with the employee ID
+            handleDeleteEmployee(employeeId);
+        }
+    });
+
+    // Other code...
+});
+
     function previewImage(event) {
   var input = event.target;
   var image = document.getElementById('preview');
@@ -473,10 +544,8 @@ table.table .avatar {
         });
     });
 
-    //    //$(document).ready(function(){
-    //    //    $('.pagin')
-    //    //}
-    //
+        
+    
 
     // JavaScript function to handle updating employee details
     function handleUpdateEmployee(employeeId) {
@@ -487,7 +556,7 @@ table.table .avatar {
         $('#updateEmployeeModal').modal('show');
     }
 
-    // sorting function😒
+    // sorting function
     function sortTable(n) {
         var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
         table = document.getElementById("table");
@@ -601,8 +670,11 @@ table.table .avatar {
                 .then(data => {
                     // Populate form fields in the update modal with the retrieved employee details
                     var imageNamee = data.imageName;
+                    var image = document.getElementById('preview2');
                     console.log(imageNamee);
-                    //                   document.getElementById('pic').value = `/images/`+ data.imageName;
+                    
+                    image.src = `/images/`+imageNamee ;
+                    
                     document.getElementById('firstName').value = data.firstName;
                     document.getElementById('lastName').value = data.lastName;
                     document.getElementById('email').value = data.email;
@@ -722,7 +794,17 @@ $("#pic").change(function() {
         // Function to populate the table with data
         function populateTable(data) {
             // Get a reference to the table body
+
             var tableBody = document.querySelector('table tbody');
+            var selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function () {
+                    var checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+                    checkboxes.forEach(function (checkbox) {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    });
+                });
+            }
 
             // Clear existing table rows
             tableBody.innerHTML = '';
@@ -744,7 +826,7 @@ $("#pic").change(function() {
                     <label for="checkbox1"></label>
                 </span>
             </td>
-          
+
             <td><img class="avatar" style="height: 50px; width: 50px;" src="/images/` + imagename + `" alt="img" </td>
             <td>` + employee.employeeId + `</td>
             <td>` + employee.firstName + `</td>
@@ -763,13 +845,14 @@ $("#pic").change(function() {
                 <a href="#update" class="edit" data-toggle="modal" onclick="handleUpdateEmployee(` + id + `)">
                     <i class="material-icons" data-toggle="tooltip" title="Edit">&#xE254;</i>
                 </a>
-                <a href="#delete2" class="delete" data-toggle="modal" data-id="` + id + `">
+                <a href="#delete2" class="delete" data-toggle="modal" data-id="` + id + `" onclick="handleDeleteEmployee(`+ id +`)">
                     <i class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i>
                 </a>
             </td>
         `;
                 // Append the row to the table body
                 tableBody.appendChild(row);
+                hidePaginationAndRecordsPerPage()
     });
         }
 
@@ -800,32 +883,37 @@ $("#pic").change(function() {
         });
     });
 
+function sendEmployeeIds() {
+    var ids = [];
+    var checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
 
-    function sendEmployeeIds() {
-        var ids = [];
-        var checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(#selectAll)');
+    checkboxes.forEach(function (checkbox) {
+        var id = checkbox.value;
+        ids.push(id);
+    });
 
-        checkboxes.forEach(function (checkbox) {
+    if (ids.length > 0) {
+        var form = document.getElementById("myForm");
 
-            var id = checkbox.value;
-            ids.push(id);
-
-        });
-
-        if (ids.length > 0) {
-            var form = document.getElementById("myForm");
-            var idsInput = document.createElement("input");
-            idsInput.type = "hidden";
-            idsInput.name = "ids";
-            idsInput.value = JSON.stringify(ids); // Convert array to JSON string
-            form.appendChild(idsInput);
-            form.submit();
-        } else {
-            // No checkboxes are checked
-            alert("Please select at least one employee.");
+        // Remove existing hidden input if any
+        var existingInput = document.getElementById("idsInput");
+        if (existingInput) {
+            existingInput.remove();
         }
-    }
 
+        // Create new hidden input
+        var idsInput = document.createElement("input");
+        idsInput.type = "hidden";
+        idsInput.id = "idsInput";
+        idsInput.name = "ids";
+        idsInput.value = JSON.stringify(ids); // Convert array to JSON string
+        form.appendChild(idsInput);
+        form.submit();
+    } else {
+        // No checkboxes are checked
+        alert("Please select at least one employee.");
+    }
+}
 
     document.addEventListener('DOMContentLoaded', function () {
         var exportBtn = document.getElementById('exportBtn');
@@ -850,7 +938,8 @@ $("#pic").change(function() {
         });
     });
     // Add event listener to the "Yes" button
-    document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
+        
     document.getElementById("exportyes").addEventListener("click", function () {
         sendEmployeeIds(); // Call sendEmployeeIds() to gather checkbox IDs before sending the request
         
@@ -872,49 +961,69 @@ $("#pic").change(function() {
 
 
     // Function to handle pagination and update records per page
-    function changeRecordsPerPage() {
-        var select = document.getElementById('recordsPerPageSelect');
-        var selectedValue = select.value;
-        console.log('Selected value:', selectedValue); // Debugging statement
+function changeRecordsPerPage() {
+    var select = document.getElementById('recordsPerPageSelect');
+    var selectedValue = select.value;
+    console.log('Selected value:', selectedValue); // Debugging statement
 
-        // Set the selected attribute for the appropriate option
-        var options = select.options;
-        for (var i = 0; i < options.length; i++) {
-            if (options[i].value === selectedValue) {
-                options[i].selected = true;
-            } else {
-                options[i].selected = false;
-            }
-        }
-
-        // Update the hidden input field value
-        document.getElementById('recordsPerPageInput').value = selectedValue;
-
-        // Submit the form
-        document.getElementById('recordsPerPageForm').submit();
-
-    }
-
-    function initPage() {
-        // Retrieve the previously selected value from a hidden input field
-        var selectedValue = document.getElementById('recordsPerPageInput').value;
-
-        // Set the selected attribute for the appropriate option
-        var select = document.getElementById('recordsPerPageSelect');
-        var options = select.options;
-        for (var i = 0; i < options.length; i++) {
-            if (options[i].value === selectedValue) {
-                options[i].selected = true;
-                break;
-            }
+    // Set the selected attribute for the appropriate option
+    var options = select.options;
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].value === selectedValue) {
+            options[i].selected = true;
+        } else {
+            options[i].selected = false;
         }
     }
 
+    // Update the hidden input field value
+    document.getElementById('recordsPerPageInput').value = selectedValue;
 
-    function handleDeleteEmployee(id) {
-        $('#deleteId').val(id);
+    // Get the current page number from the URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var currentPage = urlParams.get('page');
+
+    // Update the URL parameters for next and previous page links
+    var nextPageLink = document.querySelector('.pagination li.page-item:not(.disabled) a');
+    var prevPageLink = document.querySelector('.pagination li.page-item.disabled a');
+
+    if (nextPageLink !== null) {
+        var nextUrl = nextPageLink.getAttribute('href');
+        nextUrl = updateUrlParameter(nextUrl, 'recordsPerPage', selectedValue);
+        nextPageLink.setAttribute('href', nextUrl);
     }
 
+    if (prevPageLink !== null) {
+        var prevUrl = prevPageLink.getAttribute('href');
+        prevUrl = updateUrlParameter(prevUrl, 'recordsPerPage', selectedValue);
+        prevPageLink.setAttribute('href', prevUrl);
+    }
+
+    // Submit the form
+    document.getElementById('recordsPerPageForm').submit();
+}
+
+// Function to update URL parameter
+function updateUrlParameter(url, key, value) {
+    var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+    var separator = url.indexOf('?') !== -1 ? "&" : "?";
+    if (url.match(re)) {
+        return url.replace(re, '$1' + key + "=" + value + '$2');
+    } else {
+        return url + separator + key + "=" + value;
+    }
+}
+
+
+function handleDeleteEmployee(id) {
+    $('#deleteId').val(id);
+}
+function hidePaginationAndRecordsPerPage() {
+    var paginationDiv = document.querySelector('.clearfix');
+    if (paginationDiv) {
+        paginationDiv.style.display = 'none';
+    }
+}
 
 </script>
 
@@ -1059,38 +1168,40 @@ $("#pic").change(function() {
 			</table>
                     
      <div class="clearfix">
-         <form id="recordsPerPageForm" method="get" action="list">
+         <form id="recordsPerPageForm" method="get" action="records">
              <input type="hidden" name="recordsPerPage" id="recordsPerPageInput" value="${recordsPerPage}"/>
-    <div class="hint-text">
-        Showing <b>${listEmployees.size() + ((currentPage - 1) * recordsPerPage)}</b> out of <b>${count}</b> entries
+             <input type="hidden" name="page" id="recordsPerPageInput" value="${currentPage}"/>
+
+             <div class="hint-text">
+        Showing <b>${listEmployees.size() + ((currentPage - 1) * (recordsPerPage))}</b> out of <b>${count}</b> entries
     </div>
              <div class="records-per-page">
                  <label for="recordsPerPage">Records per page:</label>
                  <select id="recordsPerPageSelect" name="recordsPerPage" onchange="changeRecordsPerPage()">
-                     <option value="5" ${recordsPerPage == 5 ? 'selected' : ''}>5</option>
-                     <option value="25" ${recordsPerPage == 25 ? 'selected' : ''}>25</option>
-                     <option value="50" ${recordsPerPage == 50 ? 'selected' : ''}>50</option>
-                     <option value="100" ${recordsPerPage == 100 ? 'selected' : ''}>100</option>
-                     <option value="-1" ${recordsPerPage == -1 ? 'selected' : ''}>All</option>
+                     <option id="5" value="5" ${recordsPerPage == 5 ? 'selected' : ''}>5</option>
+                     <option id="25" value="25" ${recordsPerPage == 25 ? 'selected' : ''}>25</option>
+                     <option id="50" value="50" ${recordsPerPage == 50 ? 'selected' : ''}>50</option>
+                     <option id="100" value="100" ${recordsPerPage == 100 ? 'selected' : ''}>100</option>
+                     <option id="all" value="${count}" ${recordsPerPage == count ? 'selected' : ''}>All</option>
                  </select>
 
              </div>
          </form>
-    <ul class="pagination">
+     <ul class="pagination">
         <c:if test="${currentPage > 1}">
-            <li class="page-item disabled"><a href="list?page=${currentPage - 1}&recordsPerPage=${recordsPerPage}">&laquo;
-                Prev</a></li>
-        </c:if>
-        <c:forEach var="pageNumber" begin="1" end="${totalPages}">
-            <li class="page-item ${pageNumber == currentPage ? 'active' : ''}">
-                <a href="list?page=${pageNumber}&recordsPerPage=${recordsPerPage}">${pageNumber}</a>
-            </li>
-        </c:forEach>
-        <c:if test="${currentPage < totalPages}">
-            <li class="page-item">
-                <a href="list?page=${currentPage + 1}&recordsPerPage=${recordsPerPage}">Next &raquo;</a>
-            </li>
-        </c:if>
+    <li class="page-item disabled"><a href="records?page=${currentPage - 1}&recordsPerPage=${recordsPerPage}">&laquo; Prev</a></li>
+</c:if>
+<c:forEach var="pageNumber" begin="1" end="${totalPages}">
+    <li class="page-item ${pageNumber == currentPage ? 'active' : ''}">
+        <a href="records?page=${pageNumber}&recordsPerPage=${recordsPerPage}">${pageNumber}</a>
+    </li>
+</c:forEach>
+<c:if test="${currentPage < totalPages}">
+    <li class="page-item">  
+        <a href="records?page=${currentPage + 1}&recordsPerPage=${recordsPerPage}">Next &raquo;</a>
+    </li>
+</c:if>
+
     </ul>
      </div>
 
@@ -1112,7 +1223,7 @@ $("#pic").change(function() {
 
                             <div class="form-group">
                                 <label>Employee Pic*</label>
-                                <input type="file" id="pic" name="pic" onchange="previewImage(event)"
+                                <input type="file" id="pic" name="pic" accept="image/*" onchange="previewImage(event)"
                                        class="form-control">
                                 <img id="preview" alt="Preview Image">
                             </div>
@@ -1206,10 +1317,10 @@ $("#pic").change(function() {
                             <div class="col-md-6">
                               <div class="form-group">
                                 <label>Employee Pic *</label>
-                                  <input type="file" id="pic" name="pic" onchange="previewImage2(event)"
+                                  <input type="file" id="pic" src="" name="pic" accept="image/*" onchange="previewImage2(event)"
                                          class="form-control">
                                   <img id="preview2"
-                                       src="/images/${imageName}"
+                                       src=""
                                        alt="Preview Image">
                               </div>
                                 <div class="form-group">

@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 public class EmployeeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
+    private static final long defaultRecords = 5;
 
     @Override
     public void init() {
@@ -64,6 +65,7 @@ public class EmployeeServlet extends HttpServlet {
                 case "/search":
                     searchEmployee(request, response);
                     break;
+
                 case "/list":
                     listEmployee(request, response);
                     break;
@@ -71,7 +73,11 @@ public class EmployeeServlet extends HttpServlet {
                 case "/deleteEmployees":
                     deleteEmployees(request, response);
                     break;
-                
+
+                case "/records":
+                    recordsPerPage(request, response);
+                    break;
+                    
                 case "/deleteAllEmployee":
                       deleteAllEmployees(request,response);
                       break;
@@ -106,74 +112,18 @@ public class EmployeeServlet extends HttpServlet {
             throws SQLException, IOException, ServletException {
 
         int page = 1;
-        int recordsPerPage = 5; // Default value
+        int recordsPerPage = 5;
 
-        // Check if the recordsPerPage parameter is provided and not empty in the request
-        String recordsPerPageParam = request.getParameter("recordsPerPage");
-        if (recordsPerPageParam != null && !recordsPerPageParam.isEmpty()) {
-            try {
-                // Parse the parameter to get the value from the request
-                recordsPerPage = Integer.parseInt(recordsPerPageParam);
-            } catch (NumberFormatException e) {
-                // Handle the case where the parameter cannot be parsed as an integer
-                response.getWriter().write("Records per page selected not valid");
-                return; // Exit the method as we cannot proceed with an invalid parameter
-            }
-        }
-
-        // For other values of records per page, proceed with pagination
         if (request.getParameter("page") != null) {
             page = Integer.parseInt(request.getParameter("page"));
         }
 
         int start = (page - 1) * recordsPerPage;
 
-        List<Employee> listEmployees;
-        long totalCount;
-        int totalPages;
+        List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+        long totalCount = EmployeeDao.getEmployeeCounts(); // Use long instead of int
+        int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
 
-        switch (recordsPerPage) {
-            case 10:
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = EmployeeDao.getEmployeeCounts();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-            case -1:
-                // Get all employees if "All" option is selected
-                recordsPerPage = (int) EmployeeDao.getEmployeeCounts();
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = listEmployees.size();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-
-            case 25:
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = EmployeeDao.getEmployeeCounts();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-
-            case 50:
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = EmployeeDao.getEmployeeCounts();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-
-            case 100:
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = EmployeeDao.getEmployeeCounts();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-
-
-            default:
-                listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
-                totalCount = EmployeeDao.getEmployeeCounts();
-                totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
-                break;
-        }
-
-
-        // Set attributes for JSP rendering
         request.setAttribute("listEmployees", listEmployees);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("currentPage", page);
@@ -183,6 +133,55 @@ public class EmployeeServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
+    private void recordsPerPage(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException, ServletException {
+        int recordsPerPage;
+        // Default values
+        String pageParam = request.getParameter("page");
+        int page = Integer.parseInt(pageParam);
+        String recordsPerPageParam = request.getParameter("recordsPerPage");
+        if (recordsPerPageParam.isEmpty()) {
+            recordsPerPage = (int) defaultRecords;
+        }
+        // Check if the recordsPerPage parameter is provided and not empty in the request
+        if (recordsPerPageParam != null && !recordsPerPageParam.isEmpty()) {
+            try {
+                recordsPerPage = Integer.parseInt(recordsPerPageParam);
+            } catch (NumberFormatException e) {
+                // Handle the case where the parameter cannot be parsed as an integer
+                response.getWriter().write("Records per page selected not valid");
+                return; // Exit the method as we cannot proceed with an invalid parameter
+            }
+        } else {
+            recordsPerPage = (int) defaultRecords;
+        }
+
+
+        // Check if the page parameter is provided and not empty in the request
+
+        // Calculate the starting index for fetching records based on the current page and recordsPerPage
+        int start = (page - 1) * recordsPerPage;
+
+        // Fetch the list of employees based on the calculated start index and recordsPerPage
+        List<Employee> listEmployees = EmployeeDao.getEmployees(start, recordsPerPage);
+
+        // Get the total count of employees for pagination
+        long totalCount = EmployeeDao.getEmployeeCounts();
+
+        // Calculate the total number of pages based on the total count and records per page
+        int totalPages = (int) Math.ceil((double) totalCount / recordsPerPage);
+
+        // Set attributes for JSP rendering
+        request.setAttribute("listEmployees", listEmployees);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("count", totalCount);
+        request.setAttribute("recordsPerPage", recordsPerPage); // Add recordsPerPage to attributes
+
+        // Forward the request to the JSP page for rendering
+        RequestDispatcher dispatcher = request.getRequestDispatcher("employee-list.jsp");
+        dispatcher.forward(request, response);
+    }
 
     private void searchEmployee(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, ParseException {
@@ -235,9 +234,9 @@ public class EmployeeServlet extends HttpServlet {
             is.read(data);
             fos.write(data);
             fos.close();
-		
-         
-        String employeeId = Employee.generateEmployeeId();
+
+
+            String employeeId = Employee.generateEmployeeId();
         String firstName = request.getParameter("firstName");
         String lastName = request.getParameter("lastName");
         String email = request.getParameter("email");
@@ -253,7 +252,7 @@ public class EmployeeServlet extends HttpServlet {
         String job = request.getParameter("job");
         String salary = request.getParameter("salary");
         String empStatusStr = request.getParameter("empStatus");
-        EmployeeStatus empStatus = EmployeeStatus.ACTIVE;
+            EmployeeStatus empStatus = EmployeeStatus.valueOf(empStatusStr);
         Date createdBy = new Date();
 
 
@@ -272,8 +271,7 @@ public class EmployeeServlet extends HttpServlet {
     }
 
 
-
-
+    @SuppressWarnings("null")
     private void updateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         // Fetch employee ID from the request parameter
         String idParam = request.getParameter("id");
@@ -292,7 +290,7 @@ public class EmployeeServlet extends HttpServlet {
                     // Update employee data with the new values from the request parameters
 
                     Part file = request.getPart("pic");
-
+                    if (file != null && file.getSize() != 0) {
                     String imageFileName = file.getSubmittedFileName();  // get selected image file name
                     System.out.println("Selected Image File Name : " + imageFileName);
 
@@ -312,7 +310,10 @@ public class EmployeeServlet extends HttpServlet {
 
 
                     existingEmployee.setImageName(imageFileName);
-                   
+
+                    } else {
+                        existingEmployee.setImageName(existingEmployee.getImageName());
+                    }
                     existingEmployee.setFirstName(request.getParameter("firstName"));
                     existingEmployee.setLastName(request.getParameter("lastName"));
                     existingEmployee.setEmail(request.getParameter("email"));
@@ -411,29 +412,31 @@ public class EmployeeServlet extends HttpServlet {
     }
 
     private void deleteEmployees(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
+            throws IOException, ServletException {
 
         String idsParam = request.getParameter("ids");
 
         String[] idsArray = idsParam.split(",");
-            List<Integer> ids = new ArrayList<>();
-            for (String id : idsArray) {
-                if (id.equals("on")) {
-                    continue;
-                }
-                ids.add(Integer.valueOf(id));
+        List<Integer> ids = new ArrayList<>();
+        for (String id : idsArray) {
+            // Trim the ID string and remove leading and trailing whitespace
+            id = id.trim();
+            if (id.equals("on")) {
+                continue;
             }
-            String deleteMessage = EmployeeDao.deleteEmployees(ids);
+            ids.add(Integer.valueOf(id));
+        }
+        String deleteMessage = EmployeeDao.deleteEmployees(ids);
 
-            // Set the message as an attribute in the request
-            request.setAttribute("deleteMessage", deleteMessage);
+        // Set the message as an attribute in the request
+        request.setAttribute("deleteMessage", deleteMessage);
 
-            // Forward the request to the JSP page
-            response.sendRedirect("list");
-
+        // Forward the request to the JSP page
+        response.sendRedirect("list");
     }
 
- private void deleteAllEmployees(HttpServletRequest request, HttpServletResponse response)
+
+    private void deleteAllEmployees(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException, ParseException {
     String idsParam = request.getParameter("ids");
     String statusParam = request.getParameter("status");
