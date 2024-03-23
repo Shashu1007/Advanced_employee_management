@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
@@ -25,6 +26,22 @@
 
     
 <style>
+
+
+    .mailBtn{
+        float:right;
+        font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+        vertical-align: center  ;
+        background-color: #566787;
+        color: white;
+        font-size: 12px;
+
+    }
+
      .filter {
         margin-left: 70%;
         
@@ -37,9 +54,9 @@
     }
 .container-xl {
     min-width: 100%;
-    margin-right: auto; 
+    margin-right: auto;
     margin-left: auto;
-   
+
 }
 
 body {
@@ -52,10 +69,10 @@ body {
     min-width: 100%;
     margin-right: auto;
     margin-left: auto;
-    
-    
-    
-    
+
+
+
+
 }
 .table-wrapper {
 	background: #fff;
@@ -64,25 +81,25 @@ body {
     min-width: 100%;
     margin-right: auto;
     margin-left: auto;
-	
+
 	box-shadow: 0 1px 1px rgba(0,0,0,.05);
 
 }
-.table-title {        
+.table-title {
 
 	background: #2196F3;
 	color: #fff;
 	padding: 10px 10px;
     min-width: 100%;
-    
-	
+
+
 	border-radius: 3px 3px 0 0;
 }
 .table-title h2 {
 	margin: 10px;
 	font-size: 24px;
     min-width: 100%;
-    
+
 }
 .table-title .btn-group {
 	float: right;
@@ -99,23 +116,23 @@ body {
 
 	outline: none !important;
     margin-right: 10px;
-	
+
 }
 .table-title .btn i {
 	float: left;
 	font-size: 15px;
-	
+
 }
 .table-title .btn span {
 	float: left;
-	
+
 }
 table.table tr th, table.table tr td {
 	border-color: #e9e9e9;
 	padding: 5px 5px;
 	vertical-align: middle;
     min-width: 100%;
-    
+
 }
 table.table tr th:first-child {
 
@@ -138,9 +155,9 @@ table.table-striped.table-hover tbody tr:hover {
     margin-left: auto;}
 table.table th i {
 	font-size: 20px;
-	margin: auto; 
+	margin: auto;
 	cursor: pointer;
-}	
+}
 table.table td:last-child i {
 	opacity: 0.9;
 	font-size: 20px;
@@ -168,15 +185,13 @@ table.table td i {
 table.table .avatar {
 	border-radius: 50%;
 	vertical-align: middle;
-	margin-right: 05px;
     min-width: 100%;
-    margin-right: auto;
     margin-left: auto;
 }
-    
-    
+
+
 .form-exp{
-    
+
     margin:15px;
 }
 
@@ -199,16 +214,16 @@ table.table .avatar {
 }
 .pagination li a:hover {
 	color: #666;
-}	
+}
 .pagination li.active a, .pagination li a:hover {
     background-color: #2196F3;
     color:  #fff;
 }
 
-.pagination li.active a:hover {        
+.pagination li.active a:hover {
 	background: #0397d6;
         color:  #fff;
-        
+
 }
 .pagination li.disabled i {
     color: #666;
@@ -223,12 +238,12 @@ table.table .avatar {
 	float: left;
 	margin-top: 10px;
 	font-size: 13px;
-}    
+}
 
 .custom-checkbox {
 	position: relative;
 }
-.custom-checkbox input[type="checkbox"] {    
+.custom-checkbox input[type="checkbox"] {
 	opacity: 0;
 	position: absolute;
 	margin: 5px 0 0 3px;
@@ -319,42 +334,7 @@ table.table .avatar {
   }
   
 }	
-.slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 15px;
-  border-radius: 5px;  
-  background: #d3d3d3;
-  outline: none;
-  opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
-}
 
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%; 
-  background: #04AA6D;
-  cursor: pointer;
-}
-.btn-primary{
-    margin: 2px;
-}
-
-.filter-tabler{
-    border: none;
-}
-
-.slider::-moz-range-thumb {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background: #04AA6D;
-  cursor: pointer;
-}
 .col-sm-6{
 
 }
@@ -413,60 +393,7 @@ table.table .avatar {
 </style>
 
 <script>
-    //   document.addEventListener('DOMContentLoaded', function () {
-    //    // Define variables for pagination
-    //    var currentPage = 1;
-    //    var recordsPerPage = 5; // Default records per page
-    //    var totalRecords = 53; // Total number of records
-    //
-    //    // Function to display records for the current page
-    //    function displayRecords() {
-    //        var start = (currentPage - 1) * recordsPerPage;
-    //        var end = Math.min(start + recordsPerPage, totalRecords);
-    //
-    //        // Loop through table rows and show/hide based on current page
-    //        var tableRows = document.querySelectorAll('#mytable tbody tr');
-    //        for (var i = 0; i < tableRows.length; i++) {
-    //            if (i >= start && i < end) {
-    //                tableRows[i].style.display = 'table-row';
-    //            } else {
-    //                tableRows[i].style.display = 'none';
-    //            }
-    //        }
-    //    }
-    //
-    //    // Function to update pagination UI
-    //    function updatePaginationUI() {
-    //        // Calculate total pages
-    //        var totalPages = Math.ceil(totalRecords / recordsPerPage);
-    //
-    //        // Update pagination info
-    //        var paginationInfo = document.querySelector('.hint-text');
-    //        paginationInfo.innerHTML = `Showing <b>`+Math.min(totalRecords, (currentPage - 1) * recordsPerPage + 1)+`</b> to <b>`+ Math.min(totalRecords, currentPage * recordsPerPage)+`</b> of <b>`totalRecords`</b> entries`;
-    //
-    //        // Update pagination links
-    //        var pagination = document.querySelector('.pagination');
-    //        var paginationHTML = '';
-    //        for (var i = 1; i <= totalPages; i++) {
-    //          paginationHTML += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
-    //            paginationHTML += '<a class="page-link" href="#" onclick="changePage(' + i + ')">' + i + '</a>';
-    //            paginationHTML += '</li>';
-    //
-    //        }
-    //        pagination.innerHTML = paginationHTML;
-    //    }
-    //
-    //    // Function to change page
-    //    window.changePage = function(page) {
-    //        currentPage = page;
-    //        displayRecords();
-    //        updatePaginationUI();
-    //    };
-    //
-    //    // Initial display and pagination UI update
-    //    displayRecords();
-    //    updatePaginationUI();
-    //});
+
 
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -1045,10 +972,16 @@ $("#pic").change(function() {
                                 <a href="#new" class="btn btn-success" data-toggle="modal"><i class="material-icons">&#xE147;</i>
                                     <span>Add</span></a>
                                 <button class="btn btn-danger" id="deleteBtn" data-toggle="modal"><i
-                                        class="material-icons">&#xE15C;</i>
+                                        class="material-icons">&#xE872;</i>
                                     <span>Delete</span></button>
                                 <button type="submit" id="exportBtn" class="btn btn-success"><i class="material-icons">&#xE2C4;</i>Export
                                 </button>
+                                <button class="mailBtn" id="mailBtn" data-toggle="modal"><i
+                                        class="material-icons">&#xE163;</i>
+                                    <span>Mail</span></button>
+
+
+
 
                             </div>
                         </div>
@@ -1060,6 +993,7 @@ $("#pic").change(function() {
                                 <button type="submit" class="btn btn-success" id="searchButton">
                                     <i class="material-icons">&#xE8B6;</i>Search
                                 </button>
+
                             </form>
                         </div>
 
@@ -1083,6 +1017,7 @@ $("#pic").change(function() {
                                                     </select>
 
                                                 </div>
+
                                                 </th>
                                             </tr>
                                         </thead>
@@ -1165,6 +1100,10 @@ $("#pic").change(function() {
                             </c:forEach>
 			</tbody>
 			</table>
+        </div>
+    </div>
+</div>
+
                     
      <div class="clearfix">
          <form id="recordsPerPageForm" method="get" action="records">
@@ -1174,7 +1113,7 @@ $("#pic").change(function() {
              <div class="hint-text">
                  Showing <b>${listEmployees.size() + ((currentPage - 1) * (recordsPerPage))}</b> out of <b>${count}</b>
                  entries
-    </div>
+             </div>
              <div class="records-per-page">
                  <label for="recordsPerPage">Records per page:</label>
                  <select id="recordsPerPageSelect" name="recordsPerPage" onchange="changeRecordsPerPage()">

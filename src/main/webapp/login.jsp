@@ -118,9 +118,9 @@
         <h1>Login</h1>
         <div id="login-message" style="color: red;"></div>    
         <label ><b>User Name</b></label>
-        <input type="text" placeholder="Enter Username" name="username" id="username" required>
+          <label ></label><input type="text" placeholder="Enter Username" name="username" id="username" required>
 
-        <label for="password"><b>Password</b></label>
+        <label ><b>Password</b></label>
         <input type="password" id="password" placeholder="Enter Password" name="password"   required>
 
         <input type="checkbox" id="showPassword" onclick="togglePassword()"> <!-- Checkbox for show password -->

@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 public class EmployeeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    private static final long defaultRecords = 5;
+    private static final int defaultRecords = 5;
 
     @Override
     public void init() {
@@ -140,9 +140,7 @@ public class EmployeeServlet extends HttpServlet {
         String pageParam = request.getParameter("page");
         int page = Integer.parseInt(pageParam);
         String recordsPerPageParam = request.getParameter("recordsPerPage");
-        if (recordsPerPageParam.isEmpty()) {
-            recordsPerPage = (int) defaultRecords;
-        }
+
         // Check if the recordsPerPage parameter is provided and not empty in the request
         if (recordsPerPageParam != null && !recordsPerPageParam.isEmpty()) {
             try {
@@ -153,7 +151,7 @@ public class EmployeeServlet extends HttpServlet {
                 return; // Exit the method as we cannot proceed with an invalid parameter
             }
         } else {
-            recordsPerPage = (int) defaultRecords;
+            recordsPerPage =  defaultRecords;
         }
 
 
