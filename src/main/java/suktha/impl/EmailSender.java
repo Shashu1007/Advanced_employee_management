@@ -26,7 +26,7 @@ public class EmailSender  {
         properties.put("mail.smtp.host", "smtp.gmail.com");
 
         String username = "sshashu777@gmail.com";
-        String password = "wlmnkdppcjhtmdex";
+        String password = "********";
 
 
         //session
